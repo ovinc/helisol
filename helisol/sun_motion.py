@@ -25,28 +25,9 @@
 
 import numpy as np
 
-from .general import CONSTANTS
-from .general import _minus_pi_to_pi, _fraction_of_day, _day_time, _get_time
+from .general import Time
+from .general import _minus_pi_to_pi, _fraction_of_day, _day_time
 from .earth_motion import Earth
-
-
-
-# ============================ Final calculations ============================
-
-
-def _height_above_horizon(declination, hourly_angle, latitude):
-    """Height of sun above horizon in radians"""
-    return np.arcsin(np.sin(declination) * np.sin(latitude) + np.cos(declination) * np.cos(latitude) * np.cos(hourly_angle))
-
-
-def _azimuth_south(declination, hourly_angle, latitude):
-    """Azimuth of sun with respect to South"""
-    a = np.cos(declination) * np.sin(hourly_angle)
-    b = np.cos(declination) * np.cos(hourly_angle) * np.sin(latitude) - np.sin(declination) * np.cos(latitude)
-    return np.arctan2(a, b)
-
-
-# ================================ MAIN CLASS ================================
 
 
 class Sun:
@@ -66,33 +47,19 @@ class Sun:
         Sun(location=loc, utc_time='June 10 10:08:44')
         """
         self.location = location
-        self.update(utc_time=utc_time)
+        self.latitude_radians, self.longitude_radians = [np.radians(x) for x in self.location]
+
+        self.time = Time(utc=utc_time)
+        self.earth = Earth(utc_time=utc_time)
 
     def __repr__(self):
         lat_deg, long_deg = self.location
-        a = f'Sun seen from ({lat_deg}°, {long_deg}°) on {self.utc_time.date()} at {self.utc_time.time().strftime("%H:%M:%S")} (UTC)'
+        a = f'Sun seen from ({lat_deg}°, {long_deg}°) on {self.time.utc.date()} at {self.time.utc.time().strftime("%H:%M:%S")} (UTC)'
         b = f'\nHeight {self.height:.2f}, Azimuth {self.azimuth:.2f}'
 
         sunrise, noon, sunset = [t.strftime("%H:%M:%S") for t in (self.rise, self.noon, self.set)]
         c = f'\nSunrise {sunrise} Noon {noon} Sunset {sunset}'
         return a + b + c
-
-    def update(self, utc_time=None):
-        """Update sun position at current time or time set by user.
-
-        Parameters
-        ----------
-        location: tuple (or iterable) (latitude, longitude) in degrees
-        utc_time: datetime or str (default None, i.e. current time)
-
-        Examples
-        --------
-        sun.update()
-        sun.update('17:56:05')
-        sun.update(utc_time=datetime.datetime(2022, 10, 11, 15, 04))
-        """
-        self.utc_time = _get_time(utc_time)
-        self._calculate_sun_position()
 
     @property
     def right_ascension(self):
@@ -121,36 +88,56 @@ class Sun:
     @property
     def hourly_angle(self):
         """Hourly angle in degrees"""
-        H = 2 * np.pi * (_fraction_of_day(time) - 0.5) - equation_of_time + longitude
+        time = self.time.utc.time()
+        eqt = np.radians(self.equation_of_time)
+        H = 2 * np.pi * (_fraction_of_day(time) - 0.5) - eqt + self.longitude_radians
         return np.degrees(H)
 
-    def _calculate_sun_position(self):
-        """Calculate sun angles (azimuth, height, etc.) from time"""
+    @property
+    def height(self):
+        """Height of sun above horizon in radians"""
+        ẟ = np.radians(self.declination)
+        lat = self.latitude_radians
+        H = np.radians(self.hourly_angle)
+        h = np.arcsin(np.sin(ẟ) * np.sin(lat) + np.cos(ẟ) * np.cos(lat) * np.cos(H))
+        return np.degrees(h)
 
-        self.earth = Earth(utc_time=self.utc_time)
+    @property
+    def azimuth(self):
+        """Azimuth of sun with respect to South"""
+        ẟ = np.radians(self.declination)
+        H = np.radians(self.hourly_angle)
+        lat = self.latitude_radians
+        a = np.cos(ẟ) * np.sin(H)
+        b = np.cos(ẟ) * np.cos(H) * np.sin(lat) - np.sin(ẟ) * np.cos(lat)
+        A = np.arctan2(a, b)
+        return np.degrees(A)
 
-        lat, long = [x * np.pi / 180 for x in self.location]  # conversion to radians
+    @property
+    def solar_noon(self):
+        """Solar noon in fraction of day (0 for midnight, 0.5 for noon)"""
+        eqt = np.radians(self.equation_of_time)
+        long = self.longitude_radians
+        return (eqt - long) / (2 * np.pi) + 0.5
 
+    @property
+    def sunrise(self):
+        ẟ = np.radians(self.declination)
+        lat = self.latitude_radians
+        return self.solar_noon - np.arccos(-np.tan(ẟ) * np.tan(lat)) / (2 * np.pi)
 
+    @property
+    def sunset(self):
+        return 2 * self.solar_noon - self.sunrise
 
-        eqt = _equation_of_time(average_motion=m,
-                                right_ascension=right_asc,
-                                longitude_of_perigee=λ0)
+    @property
+    def noon(self):
+        return _day_time(self.solar_noon)
 
-        H = _hourly_angle(time=self.utc_time.time(),
-                          equation_of_time=eqt,
-                          longitude=long)
+    @property
+    def rise(self):
+        return _day_time(self.sunrise)
 
-        height = _height_above_horizon(declination=ẟ, hourly_angle=H, latitude=lat)
-        azimuth = _azimuth_south(declination=ẟ, hourly_angle=H, latitude=lat)
-
-        self.height = height * 180 / np.pi
-        self.azimuth = azimuth * 180 / np.pi
-
-        solar_noon = (eqt - long) / (2 * np.pi) + 0.5
-        sunrise = solar_noon - np.arccos(-np.tan(ẟ) * np.tan(lat)) / (2 * np.pi)
-        sunset = 2 * solar_noon - sunrise
-
-        self.noon = _day_time(solar_noon)
-        self.rise = _day_time(sunrise)
-        self.set = _day_time(sunset)
+    @property
+    def set(self):
+        return _day_time(self.sunset)

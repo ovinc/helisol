@@ -120,7 +120,7 @@ class Earth:
     @property
     def longitude(self):
         """Longitude (in degrees)"""
-        λ0 = self.earth.orbit.spring_longitude
+        λ0 = self.orbit.spring_longitude
         λ = λ0 + self.true_anomaly
         return λ
 
@@ -128,7 +128,7 @@ class Earth:
     def apparent_longitude(self):
         """Longitude (in degrees)"""
         λ = self.longitude
-        Δλ = self.earth.orbit.nutation_with_aberration
+        Δλ = self.orbit.nutation_with_aberration
         return λ + Δλ
 
 
