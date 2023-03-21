@@ -24,6 +24,7 @@
 
 
 import datetime
+from dateutil.parser import parse
 import numpy as np
 
 
@@ -41,6 +42,8 @@ a['M'] = 357.52911, 35999.05029, -0.0001537  # (degrees)
 CONSTANTS['average motion coefficients'] = a
 CONSTANTS['nutation coefficients'] = (125.04, -1934.136)
 CONSTANTS['aberration coefficients'] = -0.00569, -0.00478
+
+CONSTANTS['anomaly iterations'] = 5
 
 
 # =============================== MISC. tools ================================
@@ -67,3 +70,27 @@ def _day_time(fraction_of_day):
     midnight = datetime.time()
     dtime = datetime.datetime.combine(today, midnight) + Δt
     return dtime.time()
+
+
+class Time:
+    """Store time in various useful formats"""
+
+    def __init__(self, utc=None):
+        """Init time object.
+
+        Parameters
+        ----------
+        utc_time: datetime or str (default None, i.e. current time)
+        """
+        self.utc = self._parse_time(utc)
+        self.elapsed = self.utc - CONSTANTS['reference time']
+        self.days = self.elapsed.total_seconds() / (24 * 3600)
+        self.julian_years = self.days / 365.25
+        self.julian_centuries = self.julian_years / 100
+
+    def _parse_time(self, utc_time=None):
+        """Return a datetime object from user input"""
+        if utc_time is None:
+            return datetime.datetime.utcnow()
+        else:
+            return parse(str(utc_time), yearfirst=True)  # str is in case a datetime object is passed

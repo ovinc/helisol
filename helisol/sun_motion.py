@@ -23,92 +23,15 @@
 # ================================= Imports ==================================
 
 
-import datetime
-from dateutil.parser import parse
 import numpy as np
 
 from .general import CONSTANTS
-from .general import _minus_pi_to_pi, _fraction_of_day, _day_time
+from .general import _minus_pi_to_pi, _fraction_of_day, _day_time, _get_time
+from .earth_motion import Earth
 
-
-# ================= Functions depending on time in centuries =================
-
-
-def _excentricity(t):
-    """Excentricity of earth's orbit; t time in centuries"""
-    return 0.016709 - 0.000042 * t
-
-
-def _obliquity(t):
-    """Earth's axial tilt; t time in centuries"""
-    return (23 + 26 / 60 + (21.5 - 46.8 * t) / 3600) * np.pi / 180
-
-
-def _longitude_of_perigee(t):
-    """Longitude perigee / gamma. t time in centuries. output in radians."""
-    a = CONSTANTS['average motion coefficients']
-    return sum([(a['L'][i] - a['M'][i])  * t**i for i in range(3)]) * np.pi / 180
-
-
-def _average_sun_motion(t):
-    """Average motion / perigee. t time in centuries. output in radians."""
-    a = CONSTANTS['average motion coefficients']
-    m = sum([a['M'][i] * t**i for i in range(3)]) * np.pi / 180
-    return _minus_pi_to_pi(m)
-
-
-def _nutation_with_aberration(t):
-    """(delta_lambda). t: time in centuries"""
-    nut0, nut1 = CONSTANTS['nutation coefficients']
-    abr0, abr1 = CONSTANTS['aberration coefficients']
-    nut = (nut0 + nut1 * t) * np.pi / 180
-    return (abr0 + abr1 * np.sin(nut)) * np.pi / 180
-
-
-# ========= Functions that depend on average motion and excentricity =========
-
-
-def _anomaly(average_motion, excentricity, iteration=5):
-    """Iterative way of calculating excentric anomaly"""
-    if iteration == 0:
-        return average_motion
-    else:
-        u = _anomaly(average_motion, excentricity=excentricity, iteration=iteration - 1)
-        return average_motion + excentricity * np.sin(u)
-
-
-def _true_anomaly(average_motion, excentricity):
-    """theta: Kepler angle (omega * t). """
-    e = excentricity
-    u = _anomaly(average_motion=average_motion, excentricity=e)
-    return 2 * np.arctan(np.sqrt((1 + e) / (1 - e)) * np.tan(u / 2))
-
-
-# ======== Functions that depend on apparent longitude and obliquity =========
-
-
-def _right_ascension(apparent_longitude, obliquity):
-    """Right ascension in radians"""
-    return np.arctan2(np.cos(obliquity) * np.sin(apparent_longitude),
-                      np.cos(apparent_longitude))
-
-
-def _declination(apparent_longitude, obliquity):
-    """Declination in radians"""
-    return np.arcsin(np.sin(apparent_longitude) * np.sin(obliquity))
 
 
 # ============================ Final calculations ============================
-
-
-def _equation_of_time(average_motion, right_ascension, longitude_of_perigee):
-    """Equation of time, in radians"""
-    return _minus_pi_to_pi(right_ascension - longitude_of_perigee - average_motion)
-
-
-def _hourly_angle(time, equation_of_time, longitude):
-    """Hourly angle in radians"""
-    return 2 * np.pi * (_fraction_of_day(time) - 0.5) - equation_of_time + longitude
 
 
 def _height_above_horizon(declination, hourly_angle, latitude):
@@ -129,7 +52,7 @@ def _azimuth_south(declination, hourly_angle, latitude):
 class Sun:
 
     def __init__(self, location, utc_time=None):
-        """Init sun object from spcific date/time.
+        """Init sun object from specific date/time.
 
         Parameters
         ----------
@@ -154,14 +77,6 @@ class Sun:
         c = f'\nSunrise {sunrise} Noon {noon} Sunset {sunset}'
         return a + b + c
 
-    @staticmethod
-    def _get_time(utc_time=None):
-        """Return a datetime object from user input"""
-        if utc_time is None:
-            return datetime.datetime.utcnow()
-        else:
-            return parse(str(utc_time), yearfirst=True)  # str is in case a datetime object is passed
-
     def update(self, utc_time=None):
         """Update sun position at current time or time set by user.
 
@@ -176,28 +91,47 @@ class Sun:
         sun.update('17:56:05')
         sun.update(utc_time=datetime.datetime(2022, 10, 11, 15, 04))
         """
-        self.utc_time = self._get_time(utc_time)
+        self.utc_time = _get_time(utc_time)
         self._calculate_sun_position()
+
+    @property
+    def right_ascension(self):
+        """Right ascension in degrees"""
+        ε = np.radians(self.earth.orbit.axial_tilt)
+        λapp = np.radians(self.earth.apparent_longitude)
+        α = np.arctan2(np.cos(ε) * np.sin(λapp), np.cos(λapp))
+        return np.degrees(α)
+
+    @property
+    def declination(self):
+        """Declination in degrees"""
+        ε = np.radians(self.earth.orbit.axial_tilt)
+        λapp = np.radians(self.earth.apparent_longitude)
+        ẟ = np.arcsin(np.sin(λapp) * np.sin(ε))
+        return np.degrees(ẟ)
+
+    @property
+    def equation_of_time(self):
+        """Equation of time in degrees."""
+        α = np.radians(self.right_ascension)
+        γ0 = np.radians(self.earth.orbit.spring_longitude)
+        m = np.radians(self.earth.average_motion)
+        return np.degrees(_minus_pi_to_pi(α - γ0 - m))
+
+    @property
+    def hourly_angle(self):
+        """Hourly angle in degrees"""
+        H = 2 * np.pi * (_fraction_of_day(time) - 0.5) - equation_of_time + longitude
+        return np.degrees(H)
 
     def _calculate_sun_position(self):
         """Calculate sun angles (azimuth, height, etc.) from time"""
+
+        self.earth = Earth(utc_time=self.utc_time)
+
         lat, long = [x * np.pi / 180 for x in self.location]  # conversion to radians
 
-        elapsed_time = self.utc_time - CONSTANTS['reference time']
-        time_days = elapsed_time.total_seconds() / (24 * 3600)
-        time_centuries = time_days / (365.25 * 100)
 
-        e = _excentricity(t=time_centuries)
-        ε = _obliquity(t=time_centuries)
-        m = _average_sun_motion(t=time_centuries)
-        λ0 = _longitude_of_perigee(t=time_centuries)
-        Δλ = _nutation_with_aberration(t=time_centuries)
-
-        λ = λ0 + _true_anomaly(average_motion=m, excentricity=e)
-        λapp = λ + Δλ
-
-        right_asc = _right_ascension(apparent_longitude=λapp, obliquity=ε)
-        ẟ = _declination(apparent_longitude=λapp, obliquity=ε)
 
         eqt = _equation_of_time(average_motion=m,
                                 right_ascension=right_asc,
