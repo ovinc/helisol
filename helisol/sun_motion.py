@@ -23,10 +23,11 @@
 # ================================= Imports ==================================
 
 
+from copy import copy
 import numpy as np
 
-from .general import Time
-from .general import _minus_pi_to_pi, _fraction_of_day, _day_time
+from .general import Angle, Time
+from .general import sin, cos, tan
 from .earth_motion import Earth
 
 
@@ -47,97 +48,103 @@ class Sun:
         Sun(location=loc, utc_time='June 10 10:08:44')
         """
         self.location = location
-        self.latitude_radians, self.longitude_radians = [np.radians(x) for x in self.location]
+        self.latitude, self.longitude = [Angle(degrees=x) for x in location]
+        self.update(utc_time=utc_time)
 
+    def update(self, utc_time=None):
+        """Update at current time (default) or given UTC time."""
         self.time = Time(utc=utc_time)
         self.earth = Earth(utc_time=utc_time)
 
     def __repr__(self):
-        lat_deg, long_deg = self.location
-        a = f'Sun seen from ({lat_deg}°, {long_deg}°) on {self.time.utc.date()} at {self.time.utc.time().strftime("%H:%M:%S")} (UTC)'
-        b = f'\nHeight {self.height:.2f}, Azimuth {self.azimuth:.2f}'
+        lat = self.latitude.degrees
+        long = self.longitude.degrees
+        date = self.time.utc.date()
+        time = self.time.utc.time().strftime("%H:%M:%S")
+        a = f'Sun seen from ({lat}°, {long}°) on {date} at {time} (UTC)'
 
-        sunrise, noon, sunset = [t.strftime("%H:%M:%S") for t in (self.rise, self.noon, self.set)]
+        height = self.height.degrees
+        azimuth = self.azimuth.degrees
+        b = f'\nHeight {height:.2f}, Azimuth {azimuth:.2f}'
+
+        moments = self.sunrise.utc, self.noon.utc, self.sunset.utc
+        sunrise, noon, sunset = [m.strftime("%H:%M:%S") for m in moments]
         c = f'\nSunrise {sunrise} Noon {noon} Sunset {sunset}'
         return a + b + c
 
     @property
     def right_ascension(self):
-        """Right ascension in degrees"""
-        ε = np.radians(self.earth.orbit.axial_tilt)
-        λapp = np.radians(self.earth.apparent_longitude)
-        α = np.arctan2(np.cos(ε) * np.sin(λapp), np.cos(λapp))
-        return np.degrees(α)
+        ε = self.earth.orbit.axial_tilt
+        λapp = self.earth.apparent_longitude
+        alpha_rad = np.arctan2(cos(ε) * sin(λapp), cos(λapp))
+        return Angle(radians=alpha_rad)
 
     @property
     def declination(self):
-        """Declination in degrees"""
-        ε = np.radians(self.earth.orbit.axial_tilt)
-        λapp = np.radians(self.earth.apparent_longitude)
-        ẟ = np.arcsin(np.sin(λapp) * np.sin(ε))
-        return np.degrees(ẟ)
+        ε = self.earth.orbit.axial_tilt
+        λapp = self.earth.apparent_longitude
+        ẟ = np.arcsin(sin(λapp) * sin(ε))
+        return Angle(radians=ẟ)
 
     @property
     def equation_of_time(self):
-        """Equation of time in degrees."""
-        α = np.radians(self.right_ascension)
-        γ0 = np.radians(self.earth.orbit.spring_longitude)
-        m = np.radians(self.earth.average_motion)
-        return np.degrees(_minus_pi_to_pi(α - γ0 - m))
+        alpha = self.right_ascension
+        gamma0 = self.earth.orbit.spring_longitude
+        m = self.earth.average_motion
+        eqt = (alpha - gamma0 - m)
+        eqt.minus_pi_to_pi()
+        return eqt
 
     @property
     def hourly_angle(self):
-        """Hourly angle in degrees"""
-        time = self.time.utc.time()
-        eqt = np.radians(self.equation_of_time)
-        H = 2 * np.pi * (_fraction_of_day(time) - 0.5) - eqt + self.longitude_radians
-        return np.degrees(H)
+        x = self.time.fraction_of_day
+        a = Angle(radians=(2 * np.pi * (x - 0.5)))
+        return a - self.equation_of_time + self.longitude
 
     @property
     def height(self):
-        """Height of sun above horizon in radians"""
-        ẟ = np.radians(self.declination)
-        lat = self.latitude_radians
-        H = np.radians(self.hourly_angle)
-        h = np.arcsin(np.sin(ẟ) * np.sin(lat) + np.cos(ẟ) * np.cos(lat) * np.cos(H))
-        return np.degrees(h)
+        """Height of sun above horizon."""
+        ẟ = self.declination
+        lat = self.latitude
+        H = self.hourly_angle
+        h = np.arcsin(sin(ẟ) * sin(lat) + cos(ẟ) * cos(lat) * cos(H))
+        return Angle(radians=h)
 
     @property
     def azimuth(self):
         """Azimuth of sun with respect to South"""
-        ẟ = np.radians(self.declination)
-        H = np.radians(self.hourly_angle)
-        lat = self.latitude_radians
-        a = np.cos(ẟ) * np.sin(H)
-        b = np.cos(ẟ) * np.cos(H) * np.sin(lat) - np.sin(ẟ) * np.cos(lat)
-        A = np.arctan2(a, b)
-        return np.degrees(A)
-
-    @property
-    def solar_noon(self):
-        """Solar noon in fraction of day (0 for midnight, 0.5 for noon)"""
-        eqt = np.radians(self.equation_of_time)
-        long = self.longitude_radians
-        return (eqt - long) / (2 * np.pi) + 0.5
-
-    @property
-    def sunrise(self):
-        ẟ = np.radians(self.declination)
-        lat = self.latitude_radians
-        return self.solar_noon - np.arccos(-np.tan(ẟ) * np.tan(lat)) / (2 * np.pi)
-
-    @property
-    def sunset(self):
-        return 2 * self.solar_noon - self.sunrise
+        ẟ = self.declination
+        H = self.hourly_angle
+        lat = self.latitude
+        a = cos(ẟ) * sin(H)
+        b = cos(ẟ) * cos(H) * sin(lat) - sin(ẟ) * cos(lat)
+        return Angle(radians=np.arctan2(a, b))
 
     @property
     def noon(self):
-        return _day_time(self.solar_noon)
+        """Solar noon."""
+        noon = copy(self.time)
+        eqt = self.equation_of_time
+        long = self.longitude
+        noon_frac = (eqt.radians - long.radians) / (2 * np.pi) + 0.5
+        noon.fraction_of_day = noon_frac
+        return noon
 
     @property
-    def rise(self):
-        return _day_time(self.sunrise)
+    def sunrise(self):
+        """Sunrise"""
+        rise = copy(self.time)
+        ẟ = self.declination
+        lat = self.latitude
+        noon_frac = self.noon.fraction_of_day
+        rise_frac = noon_frac - np.arccos(-tan(ẟ) * tan(lat)) / (2 * np.pi)
+        rise.fraction_of_day = rise_frac
+        return rise
 
     @property
-    def set(self):
-        return _day_time(self.sunset)
+    def sunset(self):
+        """Sunset"""
+        sunset = copy(self.time)
+        sunset_frac = 2 * self.noon.fraction_of_day - self.sunrise.fraction_of_day
+        sunset.fraction_of_day = sunset_frac
+        return sunset

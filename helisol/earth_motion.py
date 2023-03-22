@@ -23,7 +23,8 @@
 import numpy as np
 
 from .general import CONSTANTS
-from .general import _minus_pi_to_pi, Time
+from .general import Angle, Time
+from .general import sin, tan
 
 
 class EarthOrbit:
@@ -53,25 +54,28 @@ class EarthOrbit:
 
     @property
     def axial_tilt(self):
-        """Earth's axial tilt (degrees)"""
+        """Earth's axial tilt"""
         t = self.time.julian_centuries
-        return (23 + 26 / 60 + (21.5 - 46.8 * t) / 3600)
+        epsilon = (23 + 26 / 60 + (21.5 - 46.8 * t) / 3600)
+        return Angle(degrees=epsilon)
 
     @property
     def spring_longitude(self):
-        """Longitude between perigee and spring (degrees)"""
+        """Longitude between perigee and spring"""
         a = CONSTANTS['average motion coefficients']
         t = self.time.julian_centuries
-        return sum([(a['L'][i] - a['M'][i]) * t**i for i in range(3)])
+        gamma0 = sum([(a['L'][i] - a['M'][i]) * t**i for i in range(3)])
+        return Angle(degrees=gamma0)
 
     @property
     def nutation_with_aberration(self):
-        """(delta_lambda). (degrees)"""
+        """(delta_lambda)"""
         t = self.time.julian_centuries
         nut0, nut1 = CONSTANTS['nutation coefficients']
         abr0, abr1 = CONSTANTS['aberration coefficients']
-        nut = (nut0 + nut1 * t) * np.pi / 180
-        return (abr0 + abr1 * np.sin(nut))
+        nut = Angle(degrees=(nut0 + nut1 * t))
+        delta_lambda = abr0 + abr1 * sin(nut)
+        return Angle(degrees=delta_lambda)
 
 
 class Earth:
@@ -93,42 +97,43 @@ class Earth:
 
     @property
     def average_motion(self):
-        """Average motion / perigee. t time in centuries. In degrees"""
+        """Average motion with respect to perigee"""
         a = CONSTANTS['average motion coefficients']
         t = self.time.julian_centuries
-        m = sum([a['M'][i] * t**i for i in range(3)]) * np.pi / 180
-        return np.degrees(_minus_pi_to_pi(m))
+        m_deg = sum([a['M'][i] * t**i for i in range(3)])
+        m = Angle(degrees=m_deg)
+        m.minus_pi_to_pi()
+        return m
 
-    def anomaly_radians(self, iteration=5):
-        """Iterative way of calculating excentric anomaly (in radians)"""
-        m = np.radians(self.average_motion)
+    def anomaly(self, iteration=5):
+        """Iterative way of calculating excentric anomaly"""
+        m0 = self.average_motion
         if iteration == 0:
-            return m
+            return m0
         else:
-            u = self.anomaly_radians(iteration=iteration - 1)
+            u = self.anomaly(iteration=iteration - 1)
             e = self.orbit.excentricity
-            return m + e * np.sin(u)
+            m_rad = m0.radians + e * sin(u)
+            return Angle(radians=m_rad)
 
     @property
     def true_anomaly(self):
-        """theta: Kepler angle (omega * t). in degrees """
-        u = self.anomaly_radians(iteration=CONSTANTS['anomaly iterations'])
+        """True anomaly (nu)"""
+        u = self.anomaly(iteration=CONSTANTS['anomaly iterations'])
         e = self.orbit.excentricity
-        nu = 2 * np.arctan(np.sqrt((1 + e) / (1 - e)) * np.tan(u / 2))
-        return np.degrees(nu)
+        nu_rad = 2 * np.arctan(np.sqrt((1 + e) / (1 - e)) * tan(u / 2))
+        return Angle(radians=nu_rad)
 
     @property
     def longitude(self):
-        """Longitude (in degrees)"""
+        """Longitude (λ) with respect to spring"""
         λ0 = self.orbit.spring_longitude
         λ = λ0 + self.true_anomaly
         return λ
 
     @property
     def apparent_longitude(self):
-        """Longitude (in degrees)"""
+        """Apparent longitude (including nutation and aberration)"""
         λ = self.longitude
         Δλ = self.orbit.nutation_with_aberration
         return λ + Δλ
-
-

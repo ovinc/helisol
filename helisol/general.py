@@ -46,30 +46,96 @@ CONSTANTS['aberration coefficients'] = -0.00569, -0.00478
 CONSTANTS['anomaly iterations'] = 5
 
 
-# =============================== MISC. tools ================================
+# ============================== MISC. classes ===============================
 
 
-def _minus_pi_to_pi(x):
-    """Angle x modulo 2*pi, between -pi and pi"""
-    return np.arctan2(np.sin(x), np.cos(x))
+class Angle:
+    """Store angles and retrieve them in degrees or radians.
 
-
-def _fraction_of_day(time):
-    """return 0 for midnight, 0.5 for noon"""
-    return (time.hour * 3600 + time.minute * 60 + time.second) / (24 * 3600)
-
-
-def _day_time(fraction_of_day):
-    """Inverse function for fraction_of_day().
-
-    Using hack from
-    https://stackoverflow.com/questions/656297/python-time-timedelta-equivalent
+    Note: can also store arrays of angles.
     """
-    Δt = datetime.timedelta(days=1) * fraction_of_day
-    today = datetime.date.today()
-    midnight = datetime.time()
-    dtime = datetime.datetime.combine(today, midnight) + Δt
-    return dtime.time()
+    def __init__(self, degrees=None, radians=None):
+        """Input angle in degrees or radians. Degrees prioritary."""
+        if degrees is not None:
+            self.degrees = degrees  # radians set automatically by degrees.setter
+        elif radians is not None:
+            self.radians = radians  # idem
+        else:
+            raise ValueError('Input must contain a value in degrees or radians.')
+
+    def __repr__(self):
+        return f'Angle ({self.degrees}[°], {self.radians}[rad])'
+
+    def __add__(self, other):
+        return Angle(degrees=self.degrees + other.degrees)
+
+    def __sub__(self, other):
+        return Angle(degrees=self.degrees - other.degrees)
+
+    def __mul__(self, other):
+        return Angle(degrees=self.degrees * other)
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
+    def __truediv__(self, other):
+        return Angle(degrees=self.degrees / other)
+
+    @property
+    def degrees(self):
+        return self._degrees
+
+    @degrees.setter
+    def degrees(self, value):
+        self._degrees = value
+        self._radians = np.radians(value)
+
+    @property
+    def radians(self):
+        return self._radians
+
+    @radians.setter
+    def radians(self, value):
+        self._radians = value
+        self._degrees = np.degrees(value)
+
+    def sin(self):
+        return np.sin(self.radians)
+
+    def cos(self):
+        return np.cos(self.radians)
+
+    def tan(self):
+        return np.tan(self.radians)
+
+    def cotan(self):
+        return 1 / np.tan(self.radians)
+
+    def minus_pi_to_pi(self):
+        """Angle modulo 2*pi, between -pi and pi"""
+        self.radians = np.arctan2(self.sin(), self.cos())
+
+
+# ===================== Convenience functions on angles ======================
+
+
+def sin(angle):
+    return angle.sin()
+
+
+def cos(angle):
+    return angle.cos()
+
+
+def tan(angle):
+    return angle.tan()
+
+
+def cotan(angle):
+    return angle.cotan()
+
+
+# =========================== Date/Time management ===========================
 
 
 class Time:
@@ -94,3 +160,21 @@ class Time:
             return datetime.datetime.utcnow()
         else:
             return parse(str(utc_time), yearfirst=True)  # str is in case a datetime object is passed
+
+    @property
+    def fraction_of_day(self):
+        """return 0 for midnight, 0.5 for noon"""
+        time = self.utc.time()
+        return (time.hour * 3600 + time.minute * 60 + time.second) / (24 * 3600)
+
+    @fraction_of_day.setter
+    def fraction_of_day(self, value):
+        """Inverse function for fraction_of_day().
+
+        Using hack from
+        https://stackoverflow.com/questions/656297/python-time-timedelta-equivalent
+        """
+        Δt = datetime.timedelta(days=1) * value
+        date = self.utc.date()
+        midnight = datetime.time()
+        self.utc = datetime.datetime.combine(date, midnight) + Δt
