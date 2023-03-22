@@ -45,7 +45,8 @@ class EarthOrbit:
         self.time = Time(utc=utc_time)
 
     def __repr__(self):
-        return f'Earth Orbit on {self.utc_time.date()} at {self.utc_time.time().strftime("%H:%M:%S")} (UTC)'
+        year = self.time.utc.date().year
+        return f'Earth Orbit in {year}'
 
     @property
     def excentricity(self):
@@ -92,8 +93,16 @@ class Earth:
         Earth('9am')
         Earth(utc_time='June 10 10:08:44')
         """
+        self.update(utc_time=utc_time)
+
+    def update(self, utc_time=None):
         self.time = Time(utc=utc_time)
         self.orbit = EarthOrbit(utc_time=utc_time)
+
+    def __repr__(self):
+        date = self.time.utc.date()
+        time = self.time.utc.time().strftime("%H:%M:%S")
+        return f'Earth on {date} at {time} (UTC)'
 
     @property
     def average_motion(self):

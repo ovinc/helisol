@@ -20,6 +20,8 @@
 # If not, see <https://www.gnu.org/licenses/>
 
 
+from .general import Time, Angle, sin, cos, tan, cotan
+from .earth_motion import Earth
 from .sun_motion import Sun
 
 # from importlib.metadata import version (only for python 3.8+)

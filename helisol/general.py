@@ -154,6 +154,9 @@ class Time:
         self.julian_years = self.days / 365.25
         self.julian_centuries = self.julian_years / 100
 
+    def __repr__(self):
+        return str(self.utc)
+
     def _parse_time(self, utc_time=None):
         """Return a datetime object from user input"""
         if utc_time is None:
