@@ -54,23 +54,42 @@ class Angle:
 
     Note: can also store arrays of angles.
     """
-    def __init__(self, degrees=None, radians=None):
-        """Input angle in degrees or radians. Degrees prioritary."""
-        if degrees is not None:
-            self.degrees = degrees  # radians set automatically by degrees.setter
-        elif radians is not None:
-            self.radians = radians  # idem
+    def __init__(self, degrees=0, minutes=0, seconds=0, radians=None):
+        """Input angle in degrees (+ minutes/seconds), or in radians
+
+        Notes:
+        - degrees, minutes, seconds can be floats and are added
+        - if radians is specified, it overrides the other values
+        """
+        if radians is not None:
+            # note: degrees etc. are set automatically thanks to setter
+            self.radians = radians
         else:
-            raise ValueError('Input must contain a value in degrees or radians.')
+            self.degrees = degrees + minutes / 60 + seconds / 3600
 
     def __repr__(self):
-        return f'Angle ({self.degrees}[°], {self.radians}[rad])'
+        if (np.array(self.degrees) < 0).all():
+            sign = '-'
+        elif (np.array(self.degrees) < 0).any():
+            sign = '+/-'
+        else:
+            sign = ''
+        round_deg = np.abs(np.int_(self.degrees))
+        minutes = np.abs(self.minutes)
+        seconds = np.abs(self.seconds)
+        a = f"""helisol.Angle ({sign}{round_deg}°{minutes}'{seconds}")\n"""
+        b = f'{self.degrees} [°]\n'
+        c = f'{self.radians} [rad]'
+        return a + b + c
 
     def __add__(self, other):
         return Angle(degrees=self.degrees + other.degrees)
 
     def __sub__(self, other):
         return Angle(degrees=self.degrees - other.degrees)
+
+    def __neg__(self):
+        return Angle(degrees=-self.degrees)
 
     def __mul__(self, other):
         return Angle(degrees=self.degrees * other)
@@ -82,6 +101,15 @@ class Angle:
         return Angle(degrees=self.degrees / other)
 
     @property
+    def radians(self):
+        return self._radians
+
+    @radians.setter
+    def radians(self, value):
+        self._radians = value
+        self._degrees = np.degrees(value)
+
+    @property
     def degrees(self):
         return self._degrees
 
@@ -91,13 +119,18 @@ class Angle:
         self._radians = np.radians(value)
 
     @property
-    def radians(self):
-        return self._radians
+    def minutes(self):
+        """Only for info, not settable"""
+        s = np.sign(self.degrees)
+        deg_abs = np.abs(self.degrees)
+        return np.int_(s * 60 * np.remainder(deg_abs, 1))
 
-    @radians.setter
-    def radians(self, value):
-        self._radians = value
-        self._degrees = np.degrees(value)
+    @property
+    def seconds(self):
+        """Only for info, not settable"""
+        s = np.sign(self.degrees)
+        deg_abs = np.abs(self.degrees)
+        return np.int_(s * 60 * np.remainder(deg_abs * 60, 1))
 
     def sin(self):
         return np.sin(self.radians)
@@ -181,3 +214,13 @@ class Time:
         date = self.utc.date()
         midnight = datetime.time()
         self.utc = datetime.datetime.combine(date, midnight) + Δt
+
+
+# ================================ Refraction ================================
+
+
+def refraction(true_height):
+    """Refraction angle from Saemundsson 1986, from true height"""
+    h = true_height.degrees
+    y = Angle(degrees=h + (10.3 / (h + 5.11)))
+    return Angle(minutes=1.02 / tan(y))

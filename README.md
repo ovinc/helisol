@@ -6,7 +6,7 @@
 
 - `Sun` describes the apparent position of the sun in the sky at a given location on earth.
 
-The package also includes tools to store and manipulate angles (`Angle` class) and times (`Time` class).
+The package also includes tools to store and manipulate angles (`Angle` class) and times (`Time` class), and a function to calculate refraction effects (`refraction()`).
 
 *SOON*:
 - Sundial calculation and generation
@@ -107,6 +107,21 @@ time.fraction_of_day  # 0 for midnight, 0.5 for noon
 time.fraction_of_day = 0.5
 ```
 
+## Refraction
+
+```python
+from helisol import Angle, refraction
+
+# When true height is at horizon level (29' approx.)
+refraction(true_height=Angle(0))
+
+# When apparent height is at horizon level (34' approx)
+refraction(true_height=Angle(minutes=-34))
+
+# At arbitrary height (true height)
+refraction(Angle(23))  # 23 degrees
+```
+
 
 # Requirements
 
@@ -123,11 +138,13 @@ Olivier Vincent
 
 # Contributors
 
-Gilbert Vincent (provided all equations)
+Gilbert Vincent (equations and advice)
 
 # References
 
-Meeus, J. *Calculs astronomiques à l’usage des amateurs*. (Société astronomique de France, 2014).
+- Meeus, J. *Calculs astronomiques à l’usage des amateurs*. Société astronomique de France (2014)
+
+- Saemundsson, T. *Astronomical Refraction*, Sky and Telescope, *72*, 70 (1986)
 
 
 # License

@@ -20,7 +20,7 @@
 # If not, see <https://www.gnu.org/licenses/>
 
 
-from .general import Time, Angle, sin, cos, tan, cotan
+from .general import Time, Angle, sin, cos, tan, cotan, refraction
 from .earth_motion import Earth
 from .sun_motion import Sun
 
