@@ -148,6 +148,22 @@ class Angle:
         """Angle modulo 2*pi, between -pi and pi"""
         self.radians = np.arctan2(self.sin(), self.cos())
 
+    @classmethod
+    def arcsin(cls, value):
+        return Angle(radians=np.arcsin(value))
+
+    @classmethod
+    def arccos(cls, value):
+        return Angle(radians=np.arccos(value))
+
+    @classmethod
+    def arctan(cls, value):
+        return Angle(radians=np.arctan(value))
+
+    @classmethod
+    def arctan2(cls, x1, x2):
+        return Angle(radians=np.arctan2(x1, x2))
+
 
 # ===================== Convenience functions on angles ======================
 

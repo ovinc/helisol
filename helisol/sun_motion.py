@@ -76,15 +76,13 @@ class Sun:
     def right_ascension(self):
         ε = self.earth.orbit.axial_tilt
         λapp = self.earth.apparent_longitude
-        alpha_rad = np.arctan2(cos(ε) * sin(λapp), cos(λapp))
-        return Angle(radians=alpha_rad)
+        return Angle.arctan2(cos(ε) * sin(λapp), cos(λapp))
 
     @property
     def declination(self):
         ε = self.earth.orbit.axial_tilt
         λapp = self.earth.apparent_longitude
-        ẟ = np.arcsin(sin(λapp) * sin(ε))
-        return Angle(radians=ẟ)
+        return Angle.arcsin(sin(λapp) * sin(ε))
 
     @property
     def equation_of_time(self):
@@ -107,8 +105,7 @@ class Sun:
         ẟ = self.declination
         lat = self.latitude
         H = self.hourly_angle
-        h = np.arcsin(sin(ẟ) * sin(lat) + cos(ẟ) * cos(lat) * cos(H))
-        return Angle(radians=h)
+        return Angle.arcsin(sin(ẟ) * sin(lat) + cos(ẟ) * cos(lat) * cos(H))
 
     @property
     def azimuth(self):
@@ -118,7 +115,7 @@ class Sun:
         lat = self.latitude
         a = cos(ẟ) * sin(H)
         b = cos(ẟ) * cos(H) * sin(lat) - sin(ẟ) * cos(lat)
-        return Angle(radians=np.arctan2(a, b))
+        return Angle.arctan2(a, b)
 
     @property
     def noon(self):

@@ -68,12 +68,17 @@ print(sun.sunrise, sun.noon, sun.sunset)
 ```python
 from helisol import Angle, sin, cos, tan
 
-a = Angle(degrees=30)
+a = Angle(degrees=30.7)
 sin(a)
 a.sin()  # equivalent to line above
 
 b = Angle(radians=np.pi/4)
 tan(b)
+
+c = Angle(degrees=3, minutes=45, seconds=10)
+cos(c)
+
+d = Angle.arctan(1)  # pi/4
 
 # Allowed operations
 a + b
@@ -81,6 +86,7 @@ a - b
 a * 2
 2 * a
 a / 2
+- a
 
 # And combinations, e.g.
 (a - b) / 4
@@ -89,6 +95,14 @@ cos(2 * a - b)
 # access values in different units
 a.radians
 a.degrees
+
+# Modify value in-place
+a.degrees = 60
+a.radians = np.pi / 4
+
+# Read-only info on minutes and seconds of angle
+a.minutes
+a.seconds
 ```
 
 

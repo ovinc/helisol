@@ -130,8 +130,7 @@ class Earth:
         """True anomaly (nu)"""
         u = self.anomaly(iteration=CONSTANTS['anomaly iterations'])
         e = self.orbit.excentricity
-        nu_rad = 2 * np.arctan(np.sqrt((1 + e) / (1 - e)) * tan(u / 2))
-        return Angle(radians=nu_rad)
+        return 2 * Angle.arctan(np.sqrt((1 + e) / (1 - e)) * tan(u / 2))
 
     @property
     def longitude(self):
