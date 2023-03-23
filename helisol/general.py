@@ -43,7 +43,8 @@ CONSTANTS['average motion coefficients'] = a
 CONSTANTS['nutation coefficients'] = (125.04, -1934.136)
 CONSTANTS['aberration coefficients'] = -0.00569, -0.00478
 
-CONSTANTS['anomaly iterations'] = 5
+CONSTANTS['anomaly iterations'] = 3
+CONSTANTS['sunset iterations'] = 2
 
 
 # ============================== MISC. classes ===============================

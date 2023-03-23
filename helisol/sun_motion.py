@@ -22,7 +22,7 @@
 
 import numpy as np
 
-from .general import Angle, Time
+from .general import CONSTANTS, Angle, Time
 from .general import sin, cos, tan
 from .earth_motion import Earth
 
@@ -115,25 +115,46 @@ class Sun:
         b = cos(ẟ) * cos(H) * sin(lat) - sin(ẟ) * cos(lat)
         return Angle.arctan2(a, b)
 
-    @property
-    def noon(self):
-        """Solar noon."""
+    # --------------------- Sunrise, solar noon, sunset ----------------------
+
+    def _noon(self):
+        """Raw solar noon, calculated for current time."""
         eqt = self.equation_of_time
         long = self.longitude
         noon_frac = (eqt.radians - long.radians) / (2 * np.pi) + 0.5
         return Time(utc_time=self.time.utc.date(), fraction_of_day=noon_frac)
 
-    @property
-    def sunrise(self):
+    def _sunrise(self):
         """Sunrise"""
         ẟ = self.declination
         lat = self.latitude
-        noon_frac = self.noon.fraction_of_day
+        noon_frac = self._noon().fraction_of_day
         rise_frac = noon_frac - np.arccos(-tan(ẟ) * tan(lat)) / (2 * np.pi)
         return Time(utc_time=self.time.utc.date(), fraction_of_day=rise_frac)
 
+    def _sunset(self):
+        """Sunset"""
+        set_frac = 2 * self._noon().fraction_of_day - self._sunrise().fraction_of_day
+        return Time(utc_time=self.time.utc.date(), fraction_of_day=set_frac)
+
+    def _converge_to_event(self, event='noon', iteration=CONSTANTS['sunset iterations']):
+        """Iterative way of conver ging sun towards sunrise, noon, or sunset"""
+        raw_event_name = '_' + event
+        if iteration == 0:
+            return self
+        else:
+            old_sun = self._converge_to_event(event, iteration=iteration - 1)
+            event_time = getattr(old_sun, raw_event_name)()
+            return Sun(old_sun.location, utc_time=event_time)
+
+    @property
+    def noon(self):
+        return self._converge_to_event(event='noon')._noon()
+
+    @property
+    def sunrise(self):
+        return self._converge_to_event(event='sunrise')._sunrise()
+
     @property
     def sunset(self):
-        """Sunset"""
-        set_frac = 2 * self.noon.fraction_of_day - self.sunrise.fraction_of_day
-        return Time(utc_time=self.time.utc.date(), fraction_of_day=set_frac)
+        return self._converge_to_event(event='sunset')._sunset()
