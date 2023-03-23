@@ -190,21 +190,30 @@ def cotan(angle):
 class Time:
     """Store time in various useful formats"""
 
-    def __init__(self, utc=None):
+    def __init__(self, utc_time=None, fraction_of_day=None):
         """Init time object.
 
         Parameters
         ----------
         utc_time: datetime or str (default None, i.e. current time)
+        fraction_of_day: if specified, overrides time from the given fraction
+                         of day (0.5 for Noon) [keeps input date]
         """
-        self.utc = self._parse_time(utc)
+        self.utc = self._parse_time(utc_time)
+        self._update()
+
+        if fraction_of_day is not None:
+            self.fraction_of_day = fraction_of_day
+
+    def __repr__(self):
+        return str(self.utc)
+
+    def _update(self):
+        """Recalculate quantities if UTC time has changed."""
         self.elapsed = self.utc - CONSTANTS['reference time']
         self.days = self.elapsed.total_seconds() / (24 * 3600)
         self.julian_years = self.days / 365.25
         self.julian_centuries = self.julian_years / 100
-
-    def __repr__(self):
-        return str(self.utc)
 
     def _parse_time(self, utc_time=None):
         """Return a datetime object from user input"""
@@ -223,13 +232,14 @@ class Time:
     def fraction_of_day(self, value):
         """Inverse function for fraction_of_day().
 
-        Using hack from
+        Kind of using hack from
         https://stackoverflow.com/questions/656297/python-time-timedelta-equivalent
         """
         Δt = datetime.timedelta(days=1) * value
         date = self.utc.date()
         midnight = datetime.time()
         self.utc = datetime.datetime.combine(date, midnight) + Δt
+        self._update()
 
 
 # ================================ Refraction ================================

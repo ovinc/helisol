@@ -42,7 +42,7 @@ class EarthOrbit:
         EarthOrbit('9am')
         EarthOrbit(utc_time='June 10 10:08:44')
         """
-        self.time = Time(utc=utc_time)
+        self.time = Time(utc_time=utc_time)
 
     def __repr__(self):
         year = self.time.utc.date().year
@@ -96,7 +96,7 @@ class Earth:
         self.update(utc_time=utc_time)
 
     def update(self, utc_time=None):
-        self.time = Time(utc=utc_time)
+        self.time = Time(utc_time=utc_time)
         self.orbit = EarthOrbit(utc_time=utc_time)
 
     def __repr__(self):

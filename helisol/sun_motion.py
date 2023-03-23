@@ -20,10 +20,6 @@
 # If not, see <https://www.gnu.org/licenses/>
 
 
-# ================================= Imports ==================================
-
-
-from copy import copy
 import numpy as np
 
 from .general import Angle, Time
@@ -53,7 +49,7 @@ class Sun:
 
     def update(self, utc_time=None):
         """Update at current time (default) or given UTC time."""
-        self.time = Time(utc=utc_time)
+        self.time = Time(utc_time=utc_time)
         self.earth = Earth(utc_time=utc_time)
 
     def __repr__(self):
@@ -120,28 +116,22 @@ class Sun:
     @property
     def noon(self):
         """Solar noon."""
-        noon = copy(self.time)
         eqt = self.equation_of_time
         long = self.longitude
         noon_frac = (eqt.radians - long.radians) / (2 * np.pi) + 0.5
-        noon.fraction_of_day = noon_frac
-        return noon
+        return Time(utc_time=self.time.utc.date(), fraction_of_day=noon_frac)
 
     @property
     def sunrise(self):
         """Sunrise"""
-        rise = copy(self.time)
         ẟ = self.declination
         lat = self.latitude
         noon_frac = self.noon.fraction_of_day
         rise_frac = noon_frac - np.arccos(-tan(ẟ) * tan(lat)) / (2 * np.pi)
-        rise.fraction_of_day = rise_frac
-        return rise
+        return Time(utc_time=self.time.utc.date(), fraction_of_day=rise_frac)
 
     @property
     def sunset(self):
         """Sunset"""
-        sunset = copy(self.time)
-        sunset_frac = 2 * self.noon.fraction_of_day - self.sunrise.fraction_of_day
-        sunset.fraction_of_day = sunset_frac
-        return sunset
+        set_frac = 2 * self.noon.fraction_of_day - self.sunrise.fraction_of_day
+        return Time(utc_time=self.time.utc.date(), fraction_of_day=set_frac)
