@@ -142,12 +142,24 @@ refraction(apparent_height=Angle(minutes=66))  # apparent height of 10'
 ```
 
 
+## Generate tables of data
+
+It is possible to generate tables (pandas DataFrames) containing sun position data, or sunset/sunrise data between selected dates and with selected frequency, with the functions:
+- `generate_table()`
+- `extend_table()`
+- `sunset_table()`
+
+(see docstrings for help and examples).
+
+
 # Requirements
 
 Python >= 3.6
 
 *Packages*
 - numpy
+- pandas
+- oclock
 
 
 # Author

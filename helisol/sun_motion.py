@@ -22,7 +22,7 @@
 
 import numpy as np
 
-from .general import CONSTANTS, Angle, Time
+from .general import CONSTANTS, Angle, Time, refraction
 from .general import sin, cos, tan
 from .earth_motion import Earth
 
@@ -104,6 +104,12 @@ class Sun:
         lat = self.latitude
         H = self.hourly_angle
         return Angle.arcsin(sin(ẟ) * sin(lat) + cos(ẟ) * cos(lat) * cos(H))
+
+    @property
+    def apparent_height(self):
+        """Apparent height including refraction"""
+        h = self.height
+        return h + refraction(true_height=h)
 
     @property
     def azimuth(self):
