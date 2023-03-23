@@ -29,8 +29,6 @@ from .earth_motion import Earth
 
 class Sun:
 
-    angular_diameter = Angle(degrees=0.53)
-
     def __init__(self, location, utc_time=None):
         """Init sun object from specific date/time.
 
@@ -69,6 +67,19 @@ class Sun:
         sunrise, noon, sunset = [m.strftime("%H:%M:%S") for m in moments]
         c = f'\nSunrise {sunrise} Noon {noon} Sunset {sunset}'
         return a + b + c
+
+    @property
+    def earth_distance(self):
+        l0 = 149_500_000
+        e = self.earth.orbit.excentricity
+        nu = self.earth.true_anomaly
+        return l0 * (1 - e**2) / (1 + e * cos(nu))
+
+    @property
+    def angular_diameter(self):
+        d =  1_392_000
+        l = self.earth_distance
+        return Angle.arctan(d / l)
 
     @property
     def right_ascension(self):
