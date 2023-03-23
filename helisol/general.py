@@ -195,9 +195,10 @@ class Time:
 
         Parameters
         ----------
-        utc_time: datetime or str (default None, i.e. current time)
-        fraction_of_day: if specified, overrides time from the given fraction
-                         of day (0.5 for Noon) [keeps input date]
+        - utc_time: datetime or str (default None, i.e. current time)
+
+        - fraction_of_day: if specified, overrides time from the given fraction
+                           of day (0.5 for Noon) [keeps input date]
         """
         self.utc = self._parse_time(utc_time)
         self._update()
@@ -245,8 +246,35 @@ class Time:
 # ================================ Refraction ================================
 
 
-def refraction(true_height):
-    """Refraction angle from Saemundsson 1986, from true height"""
-    h = true_height.degrees
-    y = Angle(degrees=h + (10.3 / (h + 5.11)))
-    return Angle(minutes=1.02 / tan(y))
+def refraction(true_height=None, apparent_height=None):
+    """Refraction angle, either from true height or apparent height.
+
+    Parameters
+    ----------
+    - true_height: helisol.Angle
+    - apparent_height: helisol.Angle
+
+    If both true_height and apparent_height are provided, apparent_height
+    is ignored.
+
+    True height formula is from Saemundsson 1986
+    Apparent height formula is from Bennett 1982
+
+    Normally valid for 1010 bars of pressure and 10°C of temperature.
+
+    Examples
+    --------
+    refraction(true_height=Angle(0))
+    refraction(apparent_height=Angle(0))
+    refraction(Angle(23))                          # true height by default
+    refraction(true_height=Angle(degrees=23))
+    refraction(apparent_height=Angle(minutes=66))
+    """
+    if true_height is not None:
+        h = true_height.degrees
+        y = Angle(degrees=h + (10.3 / (h + 5.11)))
+        return Angle(minutes=1.02 / tan(y))
+    else:
+        h0 = apparent_height.degrees
+        y0 = Angle(degrees=h0 + 7.31 / (h0 + 4.4))
+        return Angle(minutes=cotan(y0))

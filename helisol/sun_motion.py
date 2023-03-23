@@ -29,6 +29,8 @@ from .earth_motion import Earth
 
 class Sun:
 
+    angular_diameter = Angle(degrees=0.53)
+
     def __init__(self, location, utc_time=None):
         """Init sun object from specific date/time.
 

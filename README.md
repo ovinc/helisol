@@ -119,6 +119,9 @@ time.fraction_of_day  # 0 for midnight, 0.5 for noon
 
 # It is possible to manually adjust the fraction of day to set the time:
 time.fraction_of_day = 0.5
+
+# It is also possible to instantiate a Time object with a fraction of day
+time = Time(utc_time='2023, March 10', fraction_of_day=0.25)  # 6am
 ```
 
 ## Refraction
@@ -130,10 +133,12 @@ from helisol import Angle, refraction
 refraction(true_height=Angle(0))
 
 # When apparent height is at horizon level (34' approx)
-refraction(true_height=Angle(minutes=-34))
+refraction(apparent_height=Angle(0))
 
-# At arbitrary height (true height)
-refraction(Angle(23))  # 23 degrees
+# At arbitrary true height or apparent heights
+refraction(Angle(23))                          # true height of 23 degrees
+refraction(true_height=Angle(degrees=23))      # same thing
+refraction(apparent_height=Angle(minutes=66))  # apparent height of 10'
 ```
 
 
@@ -156,9 +161,11 @@ Gilbert Vincent (equations and advice)
 
 # References
 
-- Meeus, J. *Calculs astronomiques à l’usage des amateurs*. Société astronomique de France (2014)
+- Meeus, J., *Calculs astronomiques à l’usage des amateurs*, Société astronomique de France (2014).
 
-- Saemundsson, T. *Astronomical Refraction*, Sky and Telescope, *72*, 70 (1986)
+- Saemundsson, T., *Astronomical Refraction*, Sky and Telescope, **72**, 70 (1986).
+
+- Bennett, G. G., *The calculation of astronomical refraction in marine navigation*, Journal of Navigation, **35**, 255-259 (1982).
 
 
 # License

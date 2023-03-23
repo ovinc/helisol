@@ -18,10 +18,17 @@ def test_sunset():
     assert sun.sunset.utc.minute == 43
 
 
-def test_refraction():
-    """Test calculation of refraction"""
+def test_refraction_true_height():
+    """Test calculation of refraction from true height"""
     r1 = refraction(true_height=Angle(degrees=0))
     r2 = refraction(Angle(minutes=-34))
     assert r1.minutes == 28
     assert r2.minutes == 34
 
+
+def test_refraction_apparent_height():
+    """Test calculation of refraction from true height"""
+    r1 = refraction(apparent_height=Angle(degrees=0))
+    r2 = refraction(apparent_height=Angle(minutes=34))
+    assert r1.minutes == 34
+    assert r2.minutes == 28
