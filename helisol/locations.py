@@ -110,10 +110,10 @@ class Location:
     @staticmethod
     def _from_json(file):
         """Load python data (dict or list) from json file"""
-        with open(file, 'r', encoding='utf8') as f:
+        with open(file, 'w+', encoding='utf8') as f:
             try:
                 data = json.load(f)
-            except JSONDecodeError:  # no existing data
+            except (JSONDecodeError):  # no existing data
                 data = {}
         return data
 
