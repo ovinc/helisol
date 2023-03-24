@@ -10,7 +10,7 @@ The package also includes tools to store and manipulate angles (`Angle` class) a
 
 *SOON*:
 - Sundial calculation and generation
-- Improvements in precision (currently, order of 1-2 seconds in time)
+- Improvements in precision (currently, order of a few seconds in time)
 
 # Install
 
@@ -46,6 +46,8 @@ earth.update(utc_time='2023-03-21, 12:00')
 from helisol import Sun
 
 # Get current position of the sun
+# NOTE: location can be a tuple of coords, a location name (if stored in the
+# JSON database), or a location object (see below).
 sun = Sun(location=(42.4, -76.5))
 print(sun)  # Some info (azimuth height, sunrise etc. is printed here)
 
@@ -152,9 +154,35 @@ It is possible to generate tables (pandas DataFrames) containing sun position da
 (see docstrings for help and examples).
 
 
+## Location management
+
+It is possible to save/load location information with the `Location` class.
+
+```python
+From helisol import Location, Sun
+
+# Load existing location and use it to instantiate a Sun object
+location = Location.load('Home')
+sun = Sun(location)
+# equivalently:
+sun = Sun('Home')
+
+# It is possible to configure a default location in config.py (default 'Home')
+# so that one can do just
+Sun()
+
+# Define custom location and save it in the database
+# NOTE: it is possible to define elevation, although not used in helisol at
+# the moment.
+location = Location(name='Work', coords=(40.78, -73.97))
+location.save()          # save in a non-shared file (excluded from version )
+location.save('global')  # save in globals.json file, version controlled.
+```
+
+
 # Requirements
 
-Python >= 3.6
+Python >= 3.7
 
 *Packages*
 - numpy

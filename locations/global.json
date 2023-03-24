@@ -1,0 +1,30 @@
+{
+    "Reference": {
+        "coords": [
+            47,
+            2
+        ],
+        "elevation": 137
+    },
+    "Paris": {
+        "coords": [
+            48.86,
+            2.34
+        ],
+        "elevation": 34
+    },
+    "Lyon": {
+        "coords": [
+            45.757,
+            4.832
+        ],
+        "elevation": 167
+    },
+    "Marseille": {
+        "coords": [
+            43.29,
+            5.37
+        ],
+        "elevation": 2
+    }
+}

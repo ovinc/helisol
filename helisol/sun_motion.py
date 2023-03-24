@@ -1,4 +1,4 @@
-"""Calculate sun motion."""
+"""Calculate sun position"""
 
 # ----------------------------- License information --------------------------
 
@@ -25,17 +25,22 @@ import numpy as np
 from .general import CONSTANTS, Angle, Time, refraction
 from .general import sin, cos, tan
 from .earth_motion import Earth
+from .locations import Location
 
 
 class Sun:
 
-    def __init__(self, location, utc_time=None):
+    def __init__(self, location=None, utc_time=None):
         """Init sun object from specific date/time.
 
         Parameters
         ----------
-        location: tuple (or iterable) (latitude, longitude) in degrees
-        utc_time: datetime or str (default None, i.e. current time)
+        - location: Location name from JSON database,
+                    [or] custom Location object
+                    [or] iterable (latitude, longitude) in degrees
+                    if None (default), use default location
+
+        - utc_time: datetime or str (default None, i.e. current time)
 
         Examples
         --------
@@ -43,8 +48,8 @@ class Sun:
         Sun(loc, '9am')
         Sun(location=loc, utc_time='June 10 10:08:44')
         """
-        self.location = location
-        self.latitude, self.longitude = [Angle(degrees=x) for x in location]
+        self.location = Location.parse(location)
+        self.latitude, self.longitude = [Angle(degrees=x) for x in self.location.coords]
         self.update(utc_time=utc_time)
 
     def update(self, utc_time=None):

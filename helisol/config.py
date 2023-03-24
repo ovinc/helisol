@@ -1,4 +1,4 @@
-"""Helisol package init."""
+"""Config (options) for helisol package"""
 
 # ----------------------------- License information --------------------------
 
@@ -20,16 +20,5 @@
 # If not, see <https://www.gnu.org/licenses/>
 
 
-from .general import Time, Angle, sin, cos, tan, cotan, refraction
-from .earth_motion import Earth
-from .sun_motion import Sun
-from .tables import generate_table, sunset_table, extend_table
-from .locations import Location
-
-# from importlib.metadata import version (only for python 3.8+)
-from importlib_metadata import version
-
-
-__version__ = version('helisol')
-__author__ = 'Olivier Vincent'
-__license__ = 'GNU GPLv3'
+CONFIG = {}
+CONFIG['default location'] = 'Home'
