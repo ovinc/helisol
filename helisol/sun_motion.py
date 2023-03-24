@@ -29,61 +29,43 @@ from .locations import Location
 
 
 class Sun:
+    """Sun description irrespective of location on earth"""
 
-    def __init__(self, location=None, utc_time=None):
-        """Init sun object from specific date/time.
+    def __init__(self, utc_time=None):
+        """Init sun object at specific date/time.
 
         Parameters
         ----------
-        - location: Location name from JSON database,
-                    [or] custom Location object
-                    [or] iterable (latitude, longitude) in degrees
-                    if None (default), use default location
-
         - utc_time: datetime or str (default None, i.e. current time)
 
         Examples
         --------
-        loc = (42.4, -76.5)
-        Sun(loc, '9am')
-        Sun(location=loc, utc_time='June 10 10:08:44')
+        Sun('9am')
+        Sun(utc_time='June 10 10:08:44')
         """
-        self.location = Location.parse(location)
-        self.latitude, self.longitude = [Angle(degrees=x) for x in self.location.coords]
         self.update(utc_time=utc_time)
+
+    def __repr__(self):
+        date = self.time.utc.date()
+        time = self.time.utc.time().strftime("%H:%M:%S")
+        a = f'Sun on {date} at {time} (UTC)\n'
+
+        ẟ = self.declination.degrees
+        alpha = self.right_ascension.degrees
+        eqt = self.equation_of_time.degrees
+        b = f'Declination [{ẟ:.1f}°], Right Asc. [{alpha:.1f}°], EQT [{eqt:.1f}°]'
+
+        return a + b
 
     def update(self, utc_time=None):
         """Update at current time (default) or given UTC time."""
         self.time = Time(utc_time=utc_time)
         self.earth = Earth(utc_time=utc_time)
 
-    def __repr__(self):
-        lat = self.latitude.degrees
-        long = self.longitude.degrees
-        date = self.time.utc.date()
-        time = self.time.utc.time().strftime("%H:%M:%S")
-        a = f'Sun seen from ({lat}°, {long}°) on {date} at {time} (UTC)'
-
-        height = self.height.degrees
-        azimuth = self.azimuth.degrees
-        b = f'\nHeight {height:.2f}, Azimuth {azimuth:.2f}'
-
-        moments = self.sunrise.utc, self.noon.utc, self.sunset.utc
-        sunrise, noon, sunset = [m.strftime("%H:%M:%S") for m in moments]
-        c = f'\nSunrise {sunrise} Noon {noon} Sunset {sunset}'
-        return a + b + c
-
-    @property
-    def earth_distance(self):
-        l0 = 149_500_000
-        e = self.earth.orbit.excentricity
-        nu = self.earth.true_anomaly
-        return l0 * (1 - e**2) / (1 + e * cos(nu))
-
     @property
     def angular_diameter(self):
-        d =  1_392_000
-        l = self.earth_distance
+        d = 1_392_000
+        l = self.earth.distance
         return Angle.arctan(d / l)
 
     @property
@@ -112,16 +94,67 @@ class Sun:
 
         return eqt
 
+
+class SunObservation:
+    """Observation of sun at specific location on earth."""
+
+    def __init__(self, location=None, utc_time=None):
+        """Init sun observation object from specific location and date/time.
+
+        Parameters
+        ----------
+        - location: Location name from JSON database,
+                    [or] custom Location object
+                    [or] iterable (latitude, longitude) in degrees
+                    if None (default), use default location
+
+        - utc_time: datetime or str (default None, i.e. current time)
+
+        Examples
+        --------
+        loc = (42.4, -76.5)
+        Sun(loc, '9am')
+        Sun(location=loc, utc_time='June 10 10:08:44')
+        """
+        self.location = Location.parse(location)
+        self.latitude, self.longitude = [Angle(degrees=x) for x in self.location.coords]
+        self.update(utc_time=utc_time)
+
+    def update(self, utc_time=None):
+        """Update at current time (default) or given UTC time."""
+        self.time = Time(utc_time=utc_time)
+        self.earth = Earth(utc_time=utc_time)
+        self.sun = Sun(utc_time=utc_time)
+
+    def __repr__(self):
+
+        lat = self.latitude.degrees
+        long = self.longitude.degrees
+        date = self.time.utc.date()
+        time = self.time.utc.time().strftime("%H:%M:%S")
+        a = f'Sun observation from ({lat}°, {long}°) on {date} at {time} (UTC)'
+
+        height = self.height.degrees
+        app_h = self.apparent_height.degrees
+        azimuth = self.azimuth.degrees
+        b = f'\nAzimuth [{azimuth:.1f}°], Height [{height:.1f}°], App. Height [{app_h:.1f}°]'
+
+        moments = self.sunrise.utc, self.noon.utc, self.sunset.utc
+        sunrise, noon, sunset = [m.strftime("%H:%M:%S") for m in moments]
+        c = f'\nSunrise {sunrise} Noon {noon} Sunset {sunset}'
+
+        return a + b + c
+
     @property
     def hourly_angle(self):
         x = self.time.fraction_of_day
         a = Angle(radians=(2 * np.pi * (x - 0.5)))
-        return a - self.equation_of_time + self.longitude
+        return a - self.sun.equation_of_time + self.longitude
 
     @property
     def height(self):
         """Height of sun above horizon."""
-        ẟ = self.declination
+        ẟ = self.sun.declination
         lat = self.latitude
         H = self.hourly_angle
         return Angle.arcsin(sin(ẟ) * sin(lat) + cos(ẟ) * cos(lat) * cos(H))
@@ -135,7 +168,7 @@ class Sun:
     @property
     def azimuth(self):
         """Azimuth of sun with respect to South"""
-        ẟ = self.declination
+        ẟ = self.sun.declination
         H = self.hourly_angle
         lat = self.latitude
         a = cos(ẟ) * sin(H)
@@ -146,14 +179,14 @@ class Sun:
 
     def _noon(self):
         """Raw solar noon, calculated for current time."""
-        eqt = self.equation_of_time
+        eqt = self.sun.equation_of_time
         long = self.longitude
         noon_frac = (eqt.radians - long.radians) / (2 * np.pi) + 0.5
         return Time(utc_time=self.time.utc.date(), fraction_of_day=noon_frac)
 
     def _sunrise(self):
         """Sunrise"""
-        ẟ = self.declination
+        ẟ = self.sun.declination
         lat = self.latitude
         noon_frac = self._noon().fraction_of_day
         rise_frac = noon_frac - np.arccos(-tan(ẟ) * tan(lat)) / (2 * np.pi)
@@ -170,9 +203,9 @@ class Sun:
         if iteration == 0:
             return self
         else:
-            old_sun = self._converge_to_event(event, iteration=iteration - 1)
-            event_time = getattr(old_sun, raw_event_name)()
-            return Sun(old_sun.location, utc_time=event_time)
+            old_obs = self._converge_to_event(event, iteration=iteration - 1)
+            event_time = getattr(old_obs, raw_event_name)()
+            return SunObservation(old_obs.location, utc_time=event_time)
 
     @property
     def noon(self):

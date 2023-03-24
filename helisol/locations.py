@@ -84,7 +84,6 @@ class Location:
         else:
             raise ValueError(f'Location name "{name}" not found in JSON database')
 
-
     def save(self, kind='perso'):
         """Save location data into JSON database.
 

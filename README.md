@@ -1,10 +1,12 @@
 # About
 
-**helisol** is a Python 3 package that calculates precisely the earth trajectory (tilt, longitude, true anomaly etc.) and apparent sun position (height above horizon, azimuth etc.) in the sky seen from any specified position on Earth and at any time. Sunset, solar noon, and sunrise times are also provided.
+**helisol** is a Python 3 package that calculates precisely the earth trajectory (tilt, longitude, true anomaly etc.) and absolute and apparent sun position (declination, right ascension, height above horizon, azimuth etc.) in the sky seen from any specified position on Earth and at any time. Sunset, solar noon, and sunrise times are also provided.
 
-- `Earth` describes the motion of earth around the sun, irrespective of the location on the surface of earth
+- `Earth` describes the motion of earth around the sun
 
-- `Sun` describes the apparent position of the sun in the sky at a given location on earth.
+- `Sun` describes the position of the sun seen from earth, irrespective of exact location on earth (declination, equation of time, etc.)
+
+- `SunObservation` describes the position of the sun in the sky as observed at a given location on earth (azimuth, height, etc.).
 
 The package also includes tools to store and manipulate angles (`Angle` class) and times (`Time` class), and a function to calculate refraction effects (`refraction()`).
 
@@ -40,29 +42,50 @@ earth.update()
 earth.update(utc_time='2023-03-21, 12:00')
 ```
 
-## Sun viewed from given location on earth
+
+## Sun absolute position
 
 ```python
 from helisol import Sun
 
+# Get current sun position
+sun = Sun()
+sun.declination
+sun.right_ascension
+sun.equation_of_time
+
+# Access earth object associated with sun
+sun.earth
+
+# Get sun at specific UTC time and then update to current time
+sun = Sun('March 3, 13:30')
+sun.update()
+```
+
+
+## Sun viewed from given location on earth
+
+```python
+from helisol import SunObservation
+
 # Get current position of the sun
 # NOTE: location can be a tuple of coords, a location name (if stored in the
 # JSON database), or a location object (see below).
-sun = Sun(location=(42.4, -76.5))
-print(sun)  # Some info (azimuth height, sunrise etc. is printed here)
+obs = Sun(location=(42.4, -76.5))
+print(obs)  # Some info (azimuth height, sunrise etc. is printed here)
 
 # Update position to current time
-sun.update()
-print(sun)
+obs.update()
+print(obs)
 
 # Update position to specified time and date
-sun.update(utc_time='Jan 6, 2023, 4:25:03pm')
-print(sun.height)   # Height above horizon, in degrees
-print(sun.azimuth)  # azimuth with respect to south in degrees
+obs.update(utc_time='Jan 6, 2023, 4:25:03pm')
+print(obs.height)   # Height above horizon, in degrees
+print(obs.azimuth)  # azimuth with respect to south in degrees
 
 # It is possible to specify time upon instantiation directly:
-sun = Sun(location=(42.4, -76.5), utc_time='2023-1-6, 16:25:03')
-print(sun.sunrise, sun.noon, sun.sunset)
+obs = Sun(location=(42.4, -76.5), utc_time='2023-1-6, 16:25:03')
+print(obs.sunrise, obs.noon, obs.sunset)
 ```
 
 ## Angles
@@ -159,17 +182,17 @@ It is possible to generate tables (pandas DataFrames) containing sun position da
 It is possible to save/load location information with the `Location` class.
 
 ```python
-From helisol import Location, Sun
+From helisol import Location, SunObservation
 
 # Load existing location and use it to instantiate a Sun object
 location = Location.load('Home')
-sun = Sun(location)
+obs = SunObservation(location)
 # equivalently:
-sun = Sun('Home')
+obs = SunObservation('Home')
 
 # It is possible to configure a default location in config.py (default 'Home')
 # so that one can do just
-Sun()
+SunObservation()
 
 # Define custom location and save it in the database
 # NOTE: it is possible to define elevation, although not used in helisol at
