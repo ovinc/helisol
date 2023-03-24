@@ -24,7 +24,7 @@ import numpy as np
 
 from .general import CONSTANTS
 from .general import Angle, Time
-from .general import sin, tan
+from .general import sin, cos, tan
 
 
 class EarthOrbit:
@@ -55,10 +55,11 @@ class EarthOrbit:
 
     @property
     def axial_tilt(self):
-        """Earth's axial tilt"""
+        """Earth's axial tilt (epsilon)"""
         t = self.time.julian_centuries
-        epsilon = (23 + 26 / 60 + (21.5 - 46.8 * t) / 3600)
-        return Angle(degrees=epsilon)
+        eps0 = Angle(degrees=(23 + 26 / 60 + (21.5 - 46.8 * t) / 3600))
+        d_eps = Angle(seconds=9.2 * cos(self.nutation))  # tilt nutation
+        return eps0 + d_eps
 
     @property
     def spring_longitude(self):
@@ -69,14 +70,35 @@ class EarthOrbit:
         return Angle(degrees=gamma0)
 
     @property
-    def nutation_with_aberration(self):
-        """(delta_lambda)"""
+    def nutation(self):
+        """Ω"""
         t = self.time.julian_centuries
         nut0, nut1 = CONSTANTS['nutation coefficients']
-        abr0, abr1 = CONSTANTS['aberration coefficients']
-        nut = Angle(degrees=(nut0 + nut1 * t))
-        delta_lambda = abr0 + abr1 * sin(nut)
-        return Angle(degrees=delta_lambda)
+        return Angle(degrees=(nut0 + nut1 * t))
+
+    @property
+    def correc_nutation(self):
+        """Δψ"""
+        Ω = self.nutation
+        return Angle(seconds=-17.2 * sin(Ω))
+
+    @property
+    def correc_aberration(self):
+        """Δaberr"""
+        return Angle(seconds=-20.5)
+
+    @property
+    def correc_planets(self):
+        """Perturbations from planets, moon, etc."""
+        t = self.time.julian_centuries
+        perturb = Angle()
+        funcs = cos, cos, cos, sin, sin
+        for planet_coeffs, func in zip(CONSTANTS['perturbations'].values(), funcs):
+            ampl, a0, a1 = planet_coeffs
+            ag = Angle(degrees=(a0 + a1 * t))
+            corr = Angle(degrees=(ampl * func(ag)))
+            perturb += corr
+        return perturb
 
 
 class Earth:
@@ -136,12 +158,14 @@ class Earth:
     def longitude(self):
         """Longitude (λ) with respect to spring"""
         λ0 = self.orbit.spring_longitude
-        λ = λ0 + self.true_anomaly
-        return λ
+        λs = λ0 + self.true_anomaly
+        return λs
 
     @property
     def apparent_longitude(self):
-        """Apparent longitude (including nutation and aberration)"""
-        λ = self.longitude
-        Δλ = self.orbit.nutation_with_aberration
-        return λ + Δλ
+        """Apparent longitude (including correction from nutation, aberration, planets etc.)"""
+        λs = self.longitude
+        Δψ = self.orbit.correc_nutation
+        Δaberr = self.orbit.correc_aberration
+        Δplanets = self.orbit.correc_planets
+        return λs + Δψ + Δaberr + Δplanets

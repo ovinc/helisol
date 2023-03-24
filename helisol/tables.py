@@ -26,6 +26,7 @@ from oclock import parse_time
 
 from .general import Time
 from .sun_motion import Sun
+from .locations import Location
 
 
 column_names = {
@@ -53,15 +54,29 @@ def _generate_times(start, end, interval):
     return times
 
 
+def _round_to_second(time):
+    """Round time to nearest second."""
+    if time.microsecond < 5e5:
+        return time.replace(microsecond=0)
+    return time.replace(microsecond=0) + datetime.timedelta(seconds=1)
+
+
 def generate_table(location, start, end, interval, columns=column_names):
     """Generate table with solar data at regular intervals between two dates.
 
     Parameters
     ----------
-    - location: tuple (latitude, longitude) in degrees.
+     - location: Location name from JSON database,
+                    [or] custom Location object
+                    [or] iterable (latitude, longitude) in degrees
+                    if None (default), use default location
+
     - start: datetime, helisol.Time object, str or other datetime information (UTC)
+
     - end: datetime, helisol.Time object, str or other datetime information (UTC)
+
     - interval: str in the format 'hh:mm:ss', including '::10' for 10 secs
+
     - columns (optional): specify which properties and columns will be included
                           (dict with sun attribute name as key and name of
                            corresponding column as value)
@@ -78,6 +93,7 @@ def generate_table(location, start, end, interval, columns=column_names):
                    interval='24::',
                    columns={'azimuth': 'Azimuth (°)', 'height': 'Height (°)'})
     """
+    location = Location.parse(location)
     times = _generate_times(start=start, end=end, interval=interval)
 
     data = {}
@@ -97,8 +113,13 @@ def sunset_table(location, start, end):
 
     Parameters
     ----------
-    - location: tuple (latitude, longitude) in degrees.
+     - location: Location name from JSON database,
+                    [or] custom Location object
+                    [or] iterable (latitude, longitude) in degrees
+                    if None (default), use default location
+
     - start: datetime, helisol.Time object, str or other datetime information (UTC)
+
     - end: datetime, helisol.Time object, str or other datetime information (UTC)
 
     Output
@@ -115,7 +136,7 @@ def sunset_table(location, start, end):
 
     for ppty in 'sunrise', 'noon', 'sunset':
         name = ppty.capitalize()
-        data[name] = [getattr(sun, ppty).utc.time().replace(microsecond=0) for sun in suns]
+        data[name] = [_round_to_second(getattr(sun, ppty).utc).time() for sun in suns]
 
     return pd.DataFrame(data)
 
@@ -127,9 +148,16 @@ def extend_table(data, location, date_column='Date', time_column='Time (UTC)', c
     Parameters
     ----------
     - data: pandas DataFrame
-    - location: tuple (latitude, longitude) in degrees.
+
+     - location: Location name from JSON database,
+                    [or] custom Location object
+                    [or] iterable (latitude, longitude) in degrees
+                    if None (default), use default location
+
     - date_column: name of the column containing dates in the pandas dataframe
+
     - time_column: name of the column containing time in the pandas dataframe
+
     - columns (optional): specify which properties and columns will be included
                           (dict with sun attribute name as key and name of
                            corresponding column as value)

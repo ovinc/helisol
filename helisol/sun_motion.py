@@ -103,8 +103,13 @@ class Sun:
         alpha = self.right_ascension
         gamma0 = self.earth.orbit.spring_longitude
         m = self.earth.average_motion
-        eqt = (alpha - gamma0 - m)
+        Δaberr = self.earth.orbit.correc_aberration
+        Δψ = self.earth.orbit.correc_nutation
+        ε = self.earth.orbit.axial_tilt
+
+        eqt = (alpha - gamma0 - m - Δaberr - Δψ * cos(ε))
         eqt.minus_pi_to_pi()
+
         return eqt
 
     @property

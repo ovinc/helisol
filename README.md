@@ -10,7 +10,7 @@ The package also includes tools to store and manipulate angles (`Angle` class) a
 
 *SOON*:
 - Sundial calculation and generation
-- Improvements in precision (currently, order of a few seconds in time)
+
 
 # Install
 

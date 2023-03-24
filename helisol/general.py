@@ -41,10 +41,17 @@ a['M'] = 357.52911, 35999.05029, -0.0001537  # (degrees)
 
 CONSTANTS['average motion coefficients'] = a
 CONSTANTS['nutation coefficients'] = (125.04, -1934.136)
-CONSTANTS['aberration coefficients'] = -0.00569, -0.00478
 
 CONSTANTS['anomaly iterations'] = 3
 CONSTANTS['sunset iterations'] = 2
+
+planet_coeffs = {'Venus 1': (134e-5, 351.52, 22518.443),
+                 'Venus 2': (153e-5, 253.14, 45036.886),
+                 'Jupiter': (200e-5, 157.23, 32964.467),
+                 'Moon': (180e-5, 297.85, 445267.112),
+                 'Long period': (196e-5, 252.08, 20.190)}
+
+CONSTANTS['perturbations'] = planet_coeffs
 
 
 # ============================== MISC. classes ===============================
