@@ -86,6 +86,9 @@ print(obs.azimuth)  # azimuth with respect to south in degrees
 # It is possible to specify time upon instantiation directly:
 obs = Sun(location=(42.4, -76.5), utc_time='2023-1-6, 16:25:03')
 print(obs.sunrise, obs.noon, obs.sunset)
+
+# Access sun object associated with the observation:
+obs.sun
 ```
 
 ## Angles

@@ -25,7 +25,7 @@ import pandas as pd
 from oclock import parse_time
 
 from .general import Time
-from .sun_motion import Sun
+from .sun_motion import SunObservation
 from .locations import Location
 
 
@@ -33,9 +33,9 @@ column_names = {
     'azimuth': 'Azimuth (°)',
     'height': 'Height (°)',
     'apparent_height': 'Apparent Height (°)',
-    'declination': 'Declination (°)',
-    'right_ascension': 'Right Ascension (°)',
-    'equation_of_time': 'Equation of Time (°)',
+    'sun.declination': 'Declination (°)',
+    'sun.right_ascension': 'Right Ascension (°)',
+    'sun.equation_of_time': 'Equation of Time (°)',
 }
 
 
@@ -52,6 +52,16 @@ def _generate_times(start, end, interval):
         t += dt
 
     return times
+
+
+def _get_value(obj, name):
+    """Get value of object property from its name, including subnames.
+
+    (e.g. _get_value(observation, sun.declination))
+    """
+    for attrib in name.split('.'):
+        obj = getattr(obj, attrib)
+    return obj
 
 
 def _round_to_second(time):
@@ -100,10 +110,12 @@ def generate_table(location, start, end, interval, columns=column_names):
     data['Date'] = [time.utc.date() for time in times]
     data['Time (UTC)'] = [time.utc.time() for time in times]
 
-    suns = [Sun(location=location, utc_time=time) for time in times]
+    observations = [SunObservation(location=location, utc_time=time)
+                    for time in times]
 
     for ppty, name in columns.items():
-        data[name] = [getattr(sun, ppty).degrees for sun in suns]
+        data[name] = [_get_value(obs, ppty).degrees
+                      for obs in observations]
 
     return pd.DataFrame(data)
 
@@ -130,18 +142,23 @@ def sunset_table(location, start, end):
 
     data = {}
     data['Date'] = [time.utc.date() for time in times]
-    data['Time (UTC)'] = [time.utc.time() for time in times]
 
-    suns = [Sun(location=location, utc_time=time) for time in times]
+    observations = [SunObservation(location=location, utc_time=time)
+                    for time in times]
 
     for ppty in 'sunrise', 'noon', 'sunset':
         name = ppty.capitalize()
-        data[name] = [_round_to_second(getattr(sun, ppty).utc).time() for sun in suns]
+        data[name] = [_round_to_second(_get_value(obs, ppty).utc).time()
+                      for obs in observations]
 
     return pd.DataFrame(data)
 
 
-def extend_table(data, location, date_column='Date', time_column='Time (UTC)', columns=column_names):
+def extend_table(data,
+                 location,
+                 date_column='Date',
+                 time_column='Time (UTC)',
+                 columns=column_names):
     """Takes an existing table with date / time columns and adds columns with
     the corresponding solar data.
 
@@ -169,8 +186,8 @@ def extend_table(data, location, date_column='Date', time_column='Time (UTC)', c
     """
     def _calculate_angle(ppty, row):
         utc_time = datetime.datetime.combine(row[date_column], row[time_column])
-        sun = Sun(location=location, utc_time=utc_time)
-        return getattr(sun, ppty).degrees
+        obs = SunObservation(location=location, utc_time=utc_time)
+        return _get_value(obs, ppty).degrees
 
     for ppty, name in columns.items():
         calc = lambda row: _calculate_angle(ppty, row)
