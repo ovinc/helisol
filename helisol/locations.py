@@ -107,6 +107,18 @@ class Location:
 
         self._to_json(file, data)
 
+    def remove(cls, name, kind='perso'):
+        """Remove location entry from JSON database"""
+        filename = kind + '.json'
+        file = LOCATIONS_FOLDER / filename
+        data = cls._from_json(file)
+        try:
+            data.pop(name)
+        except KeyError:
+            raise ValueError(f'No entry named {name} in {filename} database')
+        else:
+            cls._to_json(file, data)
+
     @staticmethod
     def _from_json(file):
         """Load python data (dict or list) from json file"""

@@ -177,6 +177,9 @@ Sun()
 location = Location(name='Work', coords=(40.78, -73.97))
 location.save()          # save in a non-shared file (excluded from version )
 location.save('global')  # save in globals.json file, version controlled.
+
+# Remove location from database:
+location.remove('Work')
 ```
 
 
