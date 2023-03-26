@@ -28,9 +28,9 @@ def test_sunset():
 
 def test_actual_sunset():
     obs = SunObservation(location=(47, 2), utc_time='2023-03-15')
-    sunset = obs.actual_sunset(point='center')
+    sunset = obs.actual_sunset(point='center').rounded_to('minute')
     assert sunset.utc.hour == 17
-    assert sunset.utc.minute == 55
+    assert sunset.utc.minute == 56
 
 
 def test_refraction_true_height():

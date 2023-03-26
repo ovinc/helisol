@@ -250,6 +250,27 @@ class Time:
         self.utc = datetime.datetime.combine(date, midnight) + Δt
         self._update()
 
+    def rounded_to(self, unit='second'):
+        """Return rounded version of self.
+
+        Parameters
+        ----------
+        - unit (str): 'second' or 'minute'
+        """
+        if unit == 'second':
+            old_time = self.utc
+            new_time = old_time.replace(microsecond=0)
+            if old_time.microsecond >= 5e5:
+                new_time += datetime.timedelta(seconds=1)
+
+        elif unit == 'minute':
+            old_time = self.rounded_to('second').utc
+            new_time = old_time.replace(second=0)
+            if old_time.second >= 30:
+                new_time += datetime.timedelta(minutes=1)
+
+        return Time(utc_time=new_time)
+
 
 # ================================ Refraction ================================
 

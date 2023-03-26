@@ -161,6 +161,10 @@ time.fraction_of_day = 0.5
 
 # It is also possible to instantiate a Time object with a fraction of day
 time = Time(utc_time='2023, March 10', fraction_of_day=0.25)  # 6am
+
+# To obtain a rounded version of time:
+time.rounded_to('second')
+time.rounded_to('minute')
 ```
 
 ## Refraction

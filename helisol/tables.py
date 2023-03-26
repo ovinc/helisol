@@ -64,13 +64,6 @@ def _get_value(obj, name):
     return obj
 
 
-def _round_to_second(time):
-    """Round time to nearest second."""
-    if time.microsecond < 5e5:
-        return time.replace(microsecond=0)
-    return time.replace(microsecond=0) + datetime.timedelta(seconds=1)
-
-
 def generate_table(location, start, end, interval, columns=column_names):
     """Generate table with solar data at regular intervals between two dates.
 
@@ -120,7 +113,7 @@ def generate_table(location, start, end, interval, columns=column_names):
     return pd.DataFrame(data)
 
 
-def sunset_table(location, start, end):
+def sunset_table(location, start, end, refract=True, point='top', rounding='second'):
     """Create able with sunrise, noon and sunsets between specified dates.
 
     Parameters
@@ -133,6 +126,12 @@ def sunset_table(location, start, end):
     - start: datetime, helisol.Time object, str or other datetime information (UTC)
 
     - end: datetime, helisol.Time object, str or other datetime information (UTC)
+
+    - refract: Take refraction or not into account.
+
+    - point: which point of sun to consider ('top', 'bottom', 'center')
+
+    - rounding: 'second' or 'minute'
 
     Output
     ------
@@ -148,8 +147,17 @@ def sunset_table(location, start, end):
 
     for ppty in 'sunrise', 'noon', 'sunset':
         name = ppty.capitalize()
-        data[name] = [_round_to_second(_get_value(obs, ppty).utc).time()
-                      for obs in observations]
+        ll = []
+        for obs in observations:
+            if ppty == 'noon' or (not refract and point == 'center'):
+                time = _get_value(obs, ppty)
+                ftime = time
+            else:
+                ppty_func = 'actual_' + ppty
+                time_func = _get_value(obs, ppty_func)
+                ftime = time_func(refract=refract, point=point)
+            ll.append(ftime.rounded_to(rounding).utc.time())
+        data[name] = ll
 
     return pd.DataFrame(data)
 

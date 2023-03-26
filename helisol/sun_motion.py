@@ -316,9 +316,28 @@ class SunObservation:
                 msg = f'Impossible to converge {event} search within tolerance'
                 raise RuntimeError(msg)
 
-
     def actual_sunrise(self, *args, point='top', **kwargs):
+        """Find actual moment of sunrise (with refraction / obstacles), iteratively.
+
+        Parameters
+        ----------
+        - refract: (default: True): take into account refraction or not
+        - point: consider 'center', 'top', or 'bottom' of the sun
+        - obstacle: angular height of obstacle masking the sun
+        - precision: which (angular) tolerance to consider matching heights
+        - print_details: print info on the iteration / convergence process
+        """
         return self._actual_event(event='sunrise', *args, point=point, **kwargs)
 
     def actual_sunset(self, *args, point='top', **kwargs):
+        """Find actual moment of sunrise (with refraction / obstacles), iteratively.
+
+        Parameters
+        ----------
+        - refract: (default: True): take into account refraction or not
+        - point: consider 'center', 'top', or 'bottom' of the sun
+        - obstacle: angular height of obstacle masking the sun
+        - precision: which (angular) tolerance to consider matching heights
+        - print_details: print info on the iteration / convergence process
+        """
         return self._actual_event(event='sunset', *args, point=point, **kwargs)
