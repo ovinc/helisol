@@ -173,6 +173,6 @@ class Earth:
     @property
     def distance(self):
         l0 = 149_500_000
-        e = self.earth.orbit.excentricity
-        nu = self.earth.true_anomaly
+        e = self.orbit.excentricity
+        nu = self.true_anomaly
         return l0 * (1 - e**2) / (1 + e * cos(nu))

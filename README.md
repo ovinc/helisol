@@ -85,7 +85,18 @@ print(obs.azimuth)  # azimuth with respect to south in degrees
 
 # It is possible to specify time upon instantiation directly:
 obs = Sun(location=(42.4, -76.5), utc_time='2023-1-6, 16:25:03')
+
+# sunrise, noon (meridian), sunset [center of sun, no refraction]
 print(obs.sunrise, obs.noon, obs.sunset)
+
+# To include refraction and other options to calculate sunrise / sunset:
+obs.actual_sunrise()  # [top of sun, with refraction]
+obs.actual_sunrise(point='center')  # [center of sun, with refraction]
+obs.actual_sunrise(refract=False, point='bottom')  # [sun bottom, no refract]
+obs.actual_sunrise(obstacle=Angle(26))  # with an obstacle of 26° of height
+# The method also exists for sunset:
+obs.actual_sunset()
+# (NOTE: options for the precision of the calculation also exists, see docstring)
 
 # Access sun object associated with the observation:
 obs.sun
