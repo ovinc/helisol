@@ -1,3 +1,4 @@
 include *.py
 recursive-include tests *.py
+include locations/global.json
 include *.md
