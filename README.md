@@ -13,6 +13,14 @@ The package also includes tools to store and manipulate angles (`Angle` class) a
 *SOON*:
 - Sundial calculation and generation
 
+**Precision** can be evaluated by comparison to published ephemerids. We have used ephemerids for March 2023 for sunset / sunrise and solar noon, and ephemerids for August 2023 for right ascension, declination and equation of time (see test file).
+
+- Sunset, sunrise and solar noon are within the displayed precision of each other (1 second for noon, 1 minute for sunset/sunrise)
+
+- Right ascension and equation of time are within the displayed precision of each other (1 second in time)
+
+- Declination deviates less than 2.5 arc-seconds (0.17 seconds in time).
+
 
 # Install
 
@@ -114,10 +122,12 @@ a.sin()  # equivalent to line above
 b = Angle(radians=np.pi/4)
 tan(b)
 
-c = Angle(degrees=3, minutes=45, seconds=10)
+c = Angle(degrees=3, minutes=45, seconds=10)  # °, ', "
 cos(c)
 
-d = Angle.arctan(1)  # pi/4
+d = Angle(hms=(8, 44, 43))  # in hours, min, sec
+
+e = Angle.arctan(1)  # pi/4
 
 # Allowed operations
 a + b
@@ -142,6 +152,9 @@ a.radians = np.pi / 4
 # Read-only info on minutes and seconds of angle
 a.minutes
 a.seconds
+
+# Read_only info on time in hours (min/sec):
+a.hms
 ```
 
 

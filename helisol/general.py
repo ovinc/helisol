@@ -62,16 +62,33 @@ class Angle:
 
     Note: can also store arrays of angles.
     """
-    def __init__(self, degrees=0, minutes=0, seconds=0, radians=None):
-        """Input angle in degrees (+ minutes/seconds), or in radians
+    def __init__(self,
+                 degrees=0, minutes=0, seconds=0,
+                 hms=None,
+                 radians=None):
+        """Input angle in degrees (+ minutes/seconds), or in radians, or
+        in time-like format (h, m, s).
 
         Notes:
-        - degrees, minutes, seconds can be floats and are added
-        - if radians is specified, it overrides the other values
+        - By default, value is considered to be decimal degrees, e.g. Angle(10.7)
+        - degrees, hours, minutes, seconds can be floats and are added
+          (but it's preferrable to use ints when using  deg, min, sec instead
+           of decimal degrees)
+        - same for h, m, s
+        - ValueError raised if input has mixed units between °, hms, rad
         """
-        if radians is not None:
+        test_input_deg = any([abs(x) > 0 for x in (degrees, minutes, seconds)])
+        test_input_hms = (hms is not None)
+        test_input_rad = (radians is not None)
+        if sum([test_input_deg, test_input_hms, test_input_rad]) > 1:
+            raise ValueError('Cannot specify angle in more than one set of units')
+
+        if test_input_rad:
             # note: degrees etc. are set automatically thanks to setter
             self.radians = radians
+        elif test_input_hms:
+            h, m, s = hms
+            self.degrees = 15 * (h + m / 60 + s / 3600)
         else:
             self.degrees = degrees + minutes / 60 + seconds / 3600
 
@@ -83,12 +100,19 @@ class Angle:
         else:
             sign = ''
         round_deg = np.abs(np.int_(self.degrees))
+        h, m, s = [abs(x) for x in self.hms]
         minutes = np.abs(self.minutes)
         seconds = np.abs(self.seconds)
-        a = f"""helisol.Angle ({sign}{round_deg}°{minutes}'{seconds}")\n"""
-        b = f'{self.degrees} [°]\n'
-        c = f'{self.radians} [rad]'
-        return a + b + c
+        a = "helisol.Angle\n"
+        try:
+            b = f"""{sign}{round_deg}°{minutes}'{seconds:.2f} """
+            c = f"[{sign}{h}h{m}m{s:.2f}s]\n"
+        except TypeError:
+            b = f"""{sign}{round_deg}°{minutes}'{np.round(seconds, 2)} """
+            c = f"[{sign}{h}h{m}m{np.round(s, 2)}s]\n"
+        d = f'{self.degrees} [°]\n'
+        e = f'{self.radians} [rad]'
+        return a + b + c + d + e
 
     def __add__(self, other):
         return Angle(degrees=self.degrees + other.degrees)
@@ -127,10 +151,22 @@ class Angle:
         self._radians = np.radians(value)
 
     @property
+    def hms(self):
+        """Only for info, not settable"""
+        h_decimal = self.degrees / 15
+        s = np.sign(h_decimal)
+        h_abs = np.abs(h_decimal)
+        h = np.int_(h_decimal)
+        m = np.int_(s * 60 * np.remainder(h_abs, 1))
+        s = s * 60 * np.remainder(h_abs * 60, 1)
+        return (h, m, s)
+
+    @property
     def minutes(self):
         """Only for info, not settable"""
         s = np.sign(self.degrees)
         deg_abs = np.abs(self.degrees)
+        # if s in outside of int_(), returns floats instead of ints
         return np.int_(s * 60 * np.remainder(deg_abs, 1))
 
     @property
@@ -138,7 +174,7 @@ class Angle:
         """Only for info, not settable"""
         s = np.sign(self.degrees)
         deg_abs = np.abs(self.degrees)
-        return np.int_(s * 60 * np.remainder(deg_abs * 60, 1))
+        return s * 60 * np.remainder(deg_abs * 60, 1)
 
     def sin(self):
         return np.sin(self.radians)
