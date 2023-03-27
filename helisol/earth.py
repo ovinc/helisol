@@ -22,7 +22,7 @@
 
 import numpy as np
 
-from .general import CONSTANTS
+from .general import CONSTANTS, astronomical_unit
 from .general import Angle, Time
 from .general import sin, cos, tan
 
@@ -172,7 +172,7 @@ class Earth:
 
     @property
     def distance(self):
-        l0 = 149_500_000
+        l0 = astronomical_unit
         e = self.orbit.excentricity
         nu = self.true_anomaly
         return l0 * (1 - e**2) / (1 + e * cos(nu))

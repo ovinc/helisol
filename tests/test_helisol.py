@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 import helisol
-from helisol import Sun, Time, SunObservation, Angle, refraction
+from helisol import Sun, Time, SunObservation, Angle, refraction, astronomical_unit
 
 DATA_FOLDER = Path(helisol.__file__).parent.parent / 'data'
 
@@ -46,6 +46,7 @@ def test_sun():
     assert round(sun.declination.degrees, 1) == 15.6
     assert round(sun.equation_of_time.degrees, 1) == 1.4
     assert round(sun.right_ascension.degrees, 1) == 140.1
+    assert round(sun.angular_diameter.degrees, 2) == 0.53
 
 
 def test_sun_observation():
@@ -145,8 +146,20 @@ def test_ephemerides_aug2023():
     df['Equation of Time (diff)'] = df.apply(analyze_eqt, axis=1)
     max_dev_eqt_time_s = df['Equation of Time (diff)'].abs().describe()['max']
 
+    # Earth-sun distance -----------------------------------------------------
+
+    def analyze_dist(row):
+        utc_time = row['Date'] + ' ' + row['Time']
+        sun = Sun(utc_time=utc_time)
+        return sun.earth.distance / astronomical_unit
+
+    df['Distance to Earth (predicted)'] = df.apply(analyze_dist, axis=1)
+    df['Distance to Earth (diff)'] = (df['Distance to Earth'] - df['Distance to Earth (predicted)'])
+    max_dev_dist_km = df['Distance to Earth (diff)'].describe()['max'] * astronomical_unit / 1000
+
     # Final tests ------------------------------------------------------------
 
-    assert max_dev_asc_time_s < 1    # Right asc. error < 1 seconds (in time)
-    assert max_dev_decl_arc_s < 2.5  # Declination error < 2.5 arc-seconds
-    assert max_dev_eqt_time_s < 1    # EQT error < 1 seconds (in time)
+    assert max_dev_asc_time_s < 1     # Right asc. error < 1 seconds (in time)
+    assert max_dev_decl_arc_s < 2.5   # Declination error < 2.5 arc-seconds
+    assert max_dev_eqt_time_s < 1     # EQT error < 1 seconds (in time)
+    assert max_dev_dist_km < 10000    # Distance earth-sun, error < 10000 km

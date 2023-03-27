@@ -25,7 +25,7 @@ import numpy as np
 
 from .general import CONSTANTS, Angle, Time, refraction
 from .general import sin, cos, tan
-from .earth_motion import Earth
+from .earth import Earth
 from .locations import Location
 
 
@@ -65,7 +65,7 @@ class Sun:
 
     @property
     def angular_diameter(self):
-        d = 1_392_000
+        d = 1_392_000_000
         l = self.earth.distance
         return Angle.arctan(d / l)
 

@@ -25,7 +25,7 @@ import pandas as pd
 from oclock import parse_time
 
 from .general import Time
-from .sun_motion import SunObservation
+from .sun import SunObservation
 from .locations import Location
 
 

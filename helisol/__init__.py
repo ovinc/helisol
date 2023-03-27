@@ -21,8 +21,9 @@
 
 
 from .general import Time, Angle, sin, cos, tan, cotan, refraction
-from .earth_motion import Earth
-from .sun_motion import Sun, SunObservation
+from .general import astronomical_unit
+from .earth import Earth
+from .sun import Sun, SunObservation
 from .tables import generate_table, sunset_table, extend_table
 from .locations import Location
 

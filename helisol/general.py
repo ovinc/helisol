@@ -53,6 +53,8 @@ planet_coeffs = {'Venus 1': (134e-5, 351.52, 22518.443),
 
 CONSTANTS['perturbations'] = planet_coeffs
 
+astronomical_unit = 149_597_870_700  # in meters
+
 
 # ============================== MISC. classes ===============================
 
