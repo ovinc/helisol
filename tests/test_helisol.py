@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 import helisol
-from helisol import Sun, Time, SunObservation, Distance
+from helisol import Sun, Time, SunObservation, Distance, astronomical_unit
 from helisol import Angle, AngleFromDegrees
 from helisol import refraction
 
@@ -155,15 +155,16 @@ def test_ephemerides_aug2023():
     def analyze_dist(row):
         utc_time = row['Date'] + ' ' + row['Time']
         sun = Sun(utc_time=utc_time)
-        return sun.earth.distance.km
+        return sun.earth.distance.au
 
     df['Distance to Earth (predicted)'] = df.apply(analyze_dist, axis=1)
-    df['Distance to Earth (diff)'] = (df['Distance to Earth'] - df['Distance to Earth (predicted)'])
-    max_dev_dist_km = df['Distance to Earth (diff)'].describe()['max']
+    df['Distance to Earth (diff, km)'] = (df['Distance to Earth'] - df['Distance to Earth (predicted)']) * astronomical_unit / 1000
+    df.plot(y=['Distance to Earth', 'Distance to Earth (predicted)'])
+    max_dev_dist_km = df['Distance to Earth (diff, km)'].describe()['max']
 
     # Final tests ------------------------------------------------------------
 
     assert max_dev_asc_time_s < 1     # Right asc. error < 1 seconds (in time)
     assert max_dev_decl_arc_s < 2.5   # Declination error < 2.5 arc-seconds
     assert max_dev_eqt_time_s < 1     # EQT error < 1 seconds (in time)
-    assert max_dev_dist_km < 10000    # Distance earth-sun, error < 10000 km
+    assert max_dev_dist_km < 1000    # Distance earth-sun, error < 10000 km

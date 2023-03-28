@@ -66,7 +66,7 @@ class Sun:
 
     @property
     def angular_diameter(self):
-        d = 1_392_000
+        d = 1_392_684
         l = self.earth.distance.km
         return Angle.arctan(d / l)
 

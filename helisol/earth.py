@@ -108,7 +108,7 @@ class EarthOrbit:
     def correc_planets_distance(self):
         """Perturbations from planets, moon, etc. on earth-sun distance"""
         t = self.time.julian_centuries
-        perturb = AngleFromDegrees()
+        perturb = 0
         funcs = sin, sin, sin, cos, sin, sin  # second to last not taken into account
         coeffs = CONSTANTS['planet perturbation coefficients']
         ampls = CONSTANTS['planet perturbation amplitudes']
@@ -116,9 +116,8 @@ class EarthOrbit:
             a0, a1 = coeff
             _, A = ampl
             ag = AngleFromDegrees((a0 + a1 * t))
-            corr = AngleFromDegrees((A * func(ag)))
-            perturb += corr
-        return perturb
+            perturb += A * func(ag)
+        return Distance(au=perturb)
 
 
 class Earth:
@@ -195,4 +194,5 @@ class Earth:
         e = self.orbit.excentricity
         nu = self.true_anomaly
         R = 1.0000002 * (1 - e**2) / (1 + e * cos(nu))
-        return Distance(au=R)
+        ΔR = self.orbit.correc_planets_distance
+        return Distance(au=R) + ΔR

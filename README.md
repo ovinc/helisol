@@ -1,6 +1,6 @@
 # About
 
-**helisol** is a Python 3 package that calculates precisely the earth trajectory (tilt, longitude, true anomaly etc.) and absolute and apparent sun position (declination, right ascension, height above horizon, azimuth etc.) in the sky seen from any specified position on Earth and at any time. Sunset, solar noon, and sunrise times are also provided.
+**helisol** is a Python 3 package that calculates precisely the earth trajectory (tilt, longitude, true anomaly etc.) and absolute and apparent sun position (declination, right ascension, height above horizon, azimuth etc.) in the sky seen from any specified position on Earth and at any time. Sunset, solar noon, and sunrise times are also provided. It uses Meeus' equations including perturbations from planets the earth orbit.
 
 - `Earth` describes the motion of earth around the sun
 
