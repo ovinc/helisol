@@ -5,21 +5,25 @@ import pandas as pd
 import numpy as np
 
 import helisol
-from helisol import Sun, Time, SunObservation, Angle, refraction, astronomical_unit
+from helisol import Sun, Time, SunObservation, Distance
+from helisol import Angle, AngleFromDegrees
+from helisol import refraction
 
 DATA_FOLDER = Path(helisol.__file__).parent.parent / 'data'
 
 
 # ================================ Misc tools ================================
 
+
 def predict_event(row, event='sunrise'):
     obs = SunObservation((47, 2), utc_time=row['Date'])
     if event in ('sunrise', 'sunset'):
         ppty = 'actual_' + event
-        event_time = getattr(obs, ppty)(point='center', precision=Angle(hms=(0, 0, 0.5)))
+        event_time = getattr(obs, ppty)(point='center', precision=AngleFromDegrees(0.002))
     else:
         event_time = getattr(obs, event)
     return event_time.utc.time()
+
 
 def event_diff(row, event='sunrise'):
     column_eph = event.capitalize()
@@ -151,11 +155,11 @@ def test_ephemerides_aug2023():
     def analyze_dist(row):
         utc_time = row['Date'] + ' ' + row['Time']
         sun = Sun(utc_time=utc_time)
-        return sun.earth.distance / astronomical_unit
+        return sun.earth.distance.km
 
     df['Distance to Earth (predicted)'] = df.apply(analyze_dist, axis=1)
     df['Distance to Earth (diff)'] = (df['Distance to Earth'] - df['Distance to Earth (predicted)'])
-    max_dev_dist_km = df['Distance to Earth (diff)'].describe()['max'] * astronomical_unit / 1000
+    max_dev_dist_km = df['Distance to Earth (diff)'].describe()['max']
 
     # Final tests ------------------------------------------------------------
 

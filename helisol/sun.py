@@ -23,8 +23,9 @@
 from copy import copy
 import numpy as np
 
-from .general import CONSTANTS, Angle, Time, refraction
-from .general import sin, cos, tan
+from .general import CONSTANTS, Angle, Time
+from .general import AngleFromDegrees
+from .general import refraction, sin, cos, tan
 from .earth import Earth
 from .locations import Location
 
@@ -65,8 +66,8 @@ class Sun:
 
     @property
     def angular_diameter(self):
-        d = 1_392_000_000
-        l = self.earth.distance
+        d = 1_392_000
+        l = self.earth.distance.km
         return Angle.arctan(d / l)
 
     @property
@@ -118,7 +119,7 @@ class SunObservation:
         Sun(location=loc, utc_time='June 10 10:08:44')
         """
         self.location = Location.parse(location)
-        self.latitude, self.longitude = [Angle(degrees=x) for x in self.location.coords]
+        self.latitude, self.longitude = [AngleFromDegrees(x) for x in self.location.coords]
         self.update(utc_time=utc_time)
 
     def update(self, utc_time=None):
@@ -149,7 +150,7 @@ class SunObservation:
     @property
     def hourly_angle(self):
         x = self.time.fraction_of_day
-        a = Angle(radians=(2 * np.pi * (x - 0.5)))
+        a = AngleFromDegrees(360 * (x - 0.5))
         return a - self.sun.equation_of_time + self.longitude
 
     @property
@@ -224,8 +225,8 @@ class SunObservation:
                       event='sunrise',
                       refract=True,
                       point='center',
-                      obstacle=Angle(0),
-                      precision=Angle(degrees=0.01),
+                      obstacle=None,
+                      precision=None,
                       print_details=False):
         """Find actual moment of sunset or sunrise (with refraction / obstacles).
         (iteratively)
@@ -237,13 +238,17 @@ class SunObservation:
         - point: consider 'center', 'top', or 'bottom' of the sun
         - obstacle: angular height of obstacle masking the sun (Angle object)
                     or function of the azimuth returning an Angle object.
+                    By default, no obstacle (obstacle angle of 0°).
         - precision: which (angular) tolerance to consider matching heights
                      NOTE: cannot be lower than 0.0002° (or 0.7 arcseconds or
                      0.05 time-seconds) and even sometimes 0.002° (for some
                      reason I do not completely understand yet) because one
                      runs into precision limitations for floats in Python.
+                     Default: 0.01°.
         - print_details: print info on the iteration / convergence process
         """
+        obstacle = AngleFromDegrees(0) if obstacle is None else obstacle
+        precision = AngleFromDegrees(0.01) if precision is None else precision
         try:
             obstacle.degrees
         except AttributeError:
@@ -343,11 +348,13 @@ class SunObservation:
         - point: consider 'center', 'top', or 'bottom' of the sun
         - obstacle: angular height of obstacle masking the sun (Angle object)
                     or function of the azimuth returning an Angle object.
+                    By default, no obstacle (obstacle angle of 0°).
         - precision: which (angular) tolerance to consider matching heights
                      NOTE: cannot be lower than 0.0002° (or 0.7 arcseconds or
                      0.05 time-seconds) and even sometimes 0.002° (for some
                      reason I do not completely understand yet) because one
                      runs into precision limitations for floats in Python.
+                     Default: 0.01°.
         - print_details: print info on the iteration / convergence process
         """
         return self._actual_event(event='sunrise', *args, point=point, **kwargs)
@@ -361,11 +368,13 @@ class SunObservation:
         - point: consider 'center', 'top', or 'bottom' of the sun
         - obstacle: angular height of obstacle masking the sun (Angle object)
                     or function of the azimuth returning an Angle object.
+                    By default, no obstacle (obstacle angle of 0°).
         - precision: which (angular) tolerance to consider matching heights
                      NOTE: cannot be lower than 0.0002° (or 0.7 arcseconds or
                      0.05 time-seconds) and even sometimes 0.002° (for some
                      reason I do not completely understand yet) because one
                      runs into precision limitations for floats in Python.
+                     Default: 0.01°.
         - print_details: print info on the iteration / convergence process
         """
         return self._actual_event(event='sunset', *args, point=point, **kwargs)

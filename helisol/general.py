@@ -46,13 +46,23 @@ CONSTANTS['nutation coefficients'] = (125.04, -1934.136)
 CONSTANTS['anomaly iterations'] = 3
 CONSTANTS['sunset iterations'] = 2
 
-planet_coeffs = {'Venus 1': (134e-5, 351.52, 22518.443),
-                 'Venus 2': (153e-5, 253.14, 45036.886),
-                 'Jupiter': (200e-5, 157.23, 32964.467),
-                 'Moon': (180e-5, 297.85, 445267.112),
-                 'Long period': (196e-5, 252.08, 20.190)}
+planet_coeffs = {'Venus 1': (351.52, 22518.443),
+                 'Venus 2': (253.14, 45036.886),
+                 'Jupiter': (157.23, 32964.467),
+                 'Moon': (297.85, 445267.112),
+                 'Long period': (252.08, 20.190),
+                 'H': (0, 0)}
 
-CONSTANTS['perturbations'] = planet_coeffs
+# amplitudes for longitude (left) and sun-earth radius (right)
+planet_amplitudes = {'Venus 1': (134e-5, 5.43e-6),
+                     'Venus 2': (153e-5, 15.75e-6),
+                     'Jupiter': (200e-5, 16.27e-6),
+                     'Moon': (180e-5, 30.76e-6),
+                     'Long period': (196e-5, 0),
+                     'H': (0, 9.27e-6)}
+
+CONSTANTS['planet perturbation coefficients'] = planet_coeffs
+CONSTANTS['planet perturbation amplitudes'] = planet_amplitudes
 
 astronomical_unit = 149_597_870_700  # in meters
 
@@ -87,8 +97,8 @@ class Angle:
         for x in (degrees, minutes, seconds):
             try:
                 test_deg = bool(abs(x) > 0)
-            except ValueError:  # array
-                test_deg = (abs(x) > 0).any()
+            except ValueError:  # if array is passed, consider it as an input
+                test_deg = True
             finally:
                 test_degs.append(test_deg)
 
@@ -155,12 +165,11 @@ class Angle:
 
     @property
     def radians(self):
-        return self._radians
+        return self._degrees * np.pi / 180  # much faster than np.radians() for single values
 
     @radians.setter
     def radians(self, value):
-        self._radians = value
-        self._degrees = np.degrees(value)
+        self._degrees = value * 180 / np.pi  # much faster than np.degrees() for single values
 
     @property
     def degrees(self):
@@ -169,7 +178,6 @@ class Angle:
     @degrees.setter
     def degrees(self, value):
         self._degrees = value
-        self._radians = np.radians(value)
 
     @property
     def hms(self):
@@ -230,6 +238,34 @@ class Angle:
         return Angle(radians=np.arctan2(x1, x2))
 
 
+class AngleFromDegrees(Angle):
+    """Shortcut for faster execution of Angle when known to instantiate from degrees"""
+
+    def __init__(self, value=0):
+        self.degrees = value
+
+
+class AngleFromMinutes(Angle):
+    """Shortcut for faster execution of Angle when known to instantiate from arcminutes"""
+
+    def __init__(self, value=0):
+        self.degrees = value / 60
+
+
+class AngleFromSeconds(Angle):
+    """Shortcut for faster execution of Angle when known to instantiate from arcseconds"""
+
+    def __init__(self, value=0):
+        self.degrees = value / 3600
+
+
+class AngleFromRadians(Angle):
+    """Shortcut for faster execution of Angle when known to instantiate from radians"""
+
+    def __init__(self, value=0):
+        self.radians = value
+
+
 # ===================== Convenience functions on angles ======================
 
 
@@ -247,6 +283,91 @@ def tan(angle):
 
 def cotan(angle):
     return angle.cotan()
+
+
+# =========================== Distance management ============================
+
+
+@total_ordering
+class Distance:
+
+    def __init__(self, m=0, km=None, au=None):
+        """Init distance with meters, kilometers or astronomical units.
+
+        Data can be single values or arrays.
+        """
+        try:
+            test_input_m = bool(abs(m) > 0)
+        except ValueError:  # if array is passed, consider it as an input
+            test_input_m = True
+        test_input_km = (km is not None)
+        test_input_au = (au is not None)
+        if sum([test_input_m, test_input_km, test_input_au]) > 1:
+            raise ValueError('Cannot specify angle in more than one set of units')
+
+        if test_input_km:
+            self.km = km
+        elif test_input_au:
+            self.au = au
+        else:
+            self.m = m
+
+    def __repr__(self):
+        return f'helisol.Distance\n{self.m}[m]\n{self.km}[km]\n{self.au}[A.U.]'
+
+    def __eq__(self, other):
+        return (self.m == other.m)
+
+    def __lt__(self, other):
+        return (self.m < other.m)
+
+    def __add__(self, other):
+        return Distance(m=self.m + other.m)
+
+    def __sub__(self, other):
+        return Distance(m=self.m - other.m)
+
+    def __neg__(self):
+        return Distance(m=-self.m)
+
+    def __mul__(self, other):
+        return Distance(m=self.m * other)
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
+    def __truediv__(self, other):
+        return Distance(m=self.m / other)
+
+    @property
+    def m(self):
+        return self._m
+
+    @m.setter
+    def m(self, value):
+        self._m = value
+        self._km = value / 1000
+        self._au = value / astronomical_unit
+
+    @property
+    def km(self):
+        return self._km
+
+    @km.setter
+    def km(self, value):
+        self._km = value
+        self._m = value * 1000
+        self._au = self._m / astronomical_unit
+
+    @property
+    def au(self):
+        return self._au
+
+    @au.setter
+    def au(self, value):
+        self._au = value
+        self._m = value * astronomical_unit
+        self._km = self._m / 1000
 
 
 # =========================== Date/Time management ===========================

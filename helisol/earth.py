@@ -23,7 +23,8 @@
 import numpy as np
 
 from .general import CONSTANTS, astronomical_unit
-from .general import Angle, Time
+from .general import Angle, Time, Distance
+from .general import AngleFromDegrees, AngleFromSeconds, AngleFromRadians
 from .general import sin, cos, tan
 
 
@@ -57,8 +58,8 @@ class EarthOrbit:
     def axial_tilt(self):
         """Earth's axial tilt (epsilon)"""
         t = self.time.julian_centuries
-        eps0 = Angle(degrees=(23 + 26 / 60 + (21.5 - 46.8 * t) / 3600))
-        d_eps = Angle(seconds=9.2 * cos(self.nutation))  # tilt nutation
+        eps0 = AngleFromDegrees(23 + 26 / 60 + (21.5 - 46.8 * t) / 3600)
+        d_eps = AngleFromSeconds(9.2 * cos(self.nutation))  # tilt nutation
         return eps0 + d_eps
 
     @property
@@ -67,36 +68,55 @@ class EarthOrbit:
         a = CONSTANTS['average motion coefficients']
         t = self.time.julian_centuries
         gamma0 = sum([(a['L'][i] - a['M'][i]) * t**i for i in range(3)])
-        return Angle(degrees=gamma0)
+        return AngleFromDegrees(gamma0)
 
     @property
     def nutation(self):
         """Ω"""
         t = self.time.julian_centuries
         nut0, nut1 = CONSTANTS['nutation coefficients']
-        return Angle(degrees=(nut0 + nut1 * t))
+        return AngleFromDegrees(nut0 + nut1 * t)
 
     @property
     def correc_nutation(self):
         """Δψ"""
         Ω = self.nutation
-        return Angle(seconds=-17.2 * sin(Ω))
+        return AngleFromSeconds(-17.2 * sin(Ω))
 
     @property
     def correc_aberration(self):
         """Δaberr"""
-        return Angle(seconds=-20.5)
+        return AngleFromSeconds(-20.5)
 
     @property
     def correc_planets(self):
-        """Perturbations from planets, moon, etc."""
+        """Perturbations from planets, moon, etc. on longitude"""
         t = self.time.julian_centuries
-        perturb = Angle()
-        funcs = cos, cos, cos, sin, sin
-        for planet_coeffs, func in zip(CONSTANTS['perturbations'].values(), funcs):
-            ampl, a0, a1 = planet_coeffs
-            ag = Angle(degrees=(a0 + a1 * t))
-            corr = Angle(degrees=(ampl * func(ag)))
+        perturb = AngleFromDegrees()
+        funcs = cos, cos, cos, sin, sin, sin  # the last one is not taken into account (coeff 0)
+        coeffs = CONSTANTS['planet perturbation coefficients']
+        ampls = CONSTANTS['planet perturbation amplitudes']
+        for coeff, ampl, func in zip(coeffs.values(), ampls.values(), funcs):
+            a0, a1 = coeff
+            A, _ = ampl
+            ag = AngleFromDegrees((a0 + a1 * t))
+            corr = AngleFromDegrees((A * func(ag)))
+            perturb += corr
+        return perturb
+
+    @property
+    def correc_planets_distance(self):
+        """Perturbations from planets, moon, etc. on earth-sun distance"""
+        t = self.time.julian_centuries
+        perturb = AngleFromDegrees()
+        funcs = sin, sin, sin, cos, sin, sin  # second to last not taken into account
+        coeffs = CONSTANTS['planet perturbation coefficients']
+        ampls = CONSTANTS['planet perturbation amplitudes']
+        for coeff, ampl, func in zip(coeffs.values(), ampls.values(), funcs):
+            a0, a1 = coeff
+            _, A = ampl
+            ag = AngleFromDegrees((a0 + a1 * t))
+            corr = AngleFromDegrees((A * func(ag)))
             perturb += corr
         return perturb
 
@@ -132,7 +152,7 @@ class Earth:
         a = CONSTANTS['average motion coefficients']
         t = self.time.julian_centuries
         m_deg = sum([a['M'][i] * t**i for i in range(3)])
-        m = Angle(degrees=m_deg)
+        m = AngleFromDegrees(m_deg)
         m.minus_pi_to_pi()
         return m
 
@@ -145,7 +165,7 @@ class Earth:
             u = self.anomaly(iteration=iteration - 1)
             e = self.orbit.excentricity
             m_rad = m0.radians + e * sin(u)
-            return Angle(radians=m_rad)
+            return AngleFromRadians(m_rad)
 
     @property
     def true_anomaly(self):
@@ -172,7 +192,7 @@ class Earth:
 
     @property
     def distance(self):
-        l0 = astronomical_unit
         e = self.orbit.excentricity
         nu = self.true_anomaly
-        return l0 * (1 - e**2) / (1 + e * cos(nu))
+        R = 1.0000002 * (1 - e**2) / (1 + e * cos(nu))
+        return Distance(au=R)

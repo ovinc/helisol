@@ -24,7 +24,7 @@ import datetime
 import pandas as pd
 from oclock import parse_time
 
-from .general import Time, Angle
+from .general import Time, AngleFromDegrees
 from .sun import SunObservation
 from .locations import Location
 
@@ -157,7 +157,7 @@ def sunset_table(location, start, end, refract=True, point='top', rounding='seco
             else:
                 ppty_func = 'actual_' + ppty
                 time_func = _get_value(obs, ppty_func)
-                ftime = time_func(refract=refract, point=point, precision=Angle(hms=(0, 0, 0.5)))
+                ftime = time_func(refract=refract, point=point, precision=AngleFromDegrees(0.002))
             ll.append(ftime.rounded_to(rounding).utc.time())
         data[name] = ll
 
