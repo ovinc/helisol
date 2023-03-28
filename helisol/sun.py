@@ -239,8 +239,9 @@ class SunObservation:
                     or function of the azimuth returning an Angle object.
         - precision: which (angular) tolerance to consider matching heights
                      NOTE: cannot be lower than 0.0002° (or 0.7 arcseconds or
-                     0.05 time-seconds) because one runs into precision
-                     limitations for standard floats in Python.
+                     0.05 time-seconds) and even sometimes 0.002° (for some
+                     reason I do not completely understand yet) because one
+                     runs into precision limitations for floats in Python.
         - print_details: print info on the iteration / convergence process
         """
         try:
@@ -326,9 +327,9 @@ class SunObservation:
                 return manage_result(results)
             else:
                 msg = f'Impossible to converge {event} search within tolerance. '
-                if precision.degrees < 0.0002:
+                if precision.degrees < 0.002:
                     msg += f'This is probably because required precision of {precision.degrees}° is too high. '
-                    msg += 'Please try with a precision larger than 0.0002°.\n'
+                    msg += 'Please try first with a precision larger than 0.002°.\n'
                 results['iterations'] = total_iterations
                 msg += str(results)
                 raise RuntimeError(msg)
@@ -344,8 +345,9 @@ class SunObservation:
                     or function of the azimuth returning an Angle object.
         - precision: which (angular) tolerance to consider matching heights
                      NOTE: cannot be lower than 0.0002° (or 0.7 arcseconds or
-                     0.05 time-seconds) because one runs into precision
-                     limitations for standard floats in Python.
+                     0.05 time-seconds) and even sometimes 0.002° (for some
+                     reason I do not completely understand yet) because one
+                     runs into precision limitations for floats in Python.
         - print_details: print info on the iteration / convergence process
         """
         return self._actual_event(event='sunrise', *args, point=point, **kwargs)
@@ -361,8 +363,9 @@ class SunObservation:
                     or function of the azimuth returning an Angle object.
         - precision: which (angular) tolerance to consider matching heights
                      NOTE: cannot be lower than 0.0002° (or 0.7 arcseconds or
-                     0.05 time-seconds) because one runs into precision
-                     limitations for standard floats in Python.
+                     0.05 time-seconds) and even sometimes 0.002° (for some
+                     reason I do not completely understand yet) because one
+                     runs into precision limitations for floats in Python.
         - print_details: print info on the iteration / convergence process
         """
         return self._actual_event(event='sunset', *args, point=point, **kwargs)

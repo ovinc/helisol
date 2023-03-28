@@ -25,6 +25,7 @@
 
 import datetime
 from dateutil.parser import parse
+from functools import total_ordering
 import numpy as np
 
 
@@ -59,6 +60,7 @@ astronomical_unit = 149_597_870_700  # in meters
 # ============================== MISC. classes ===============================
 
 
+@total_ordering
 class Angle:
     """Store angles and retrieve them in degrees or radians.
 
@@ -81,13 +83,8 @@ class Angle:
         """
         test_degs = []
         for x in (degrees, minutes, seconds):
-            try:
-                test_deg = bool(abs(x) > 0)
-            except ValueError:  # array
-                test_deg = (abs(x) > 0).any()
-            finally:
-                test_degs.append(test_deg)
-
+            test_deg = (np.abs(np.array(x)) > 0).any()
+            test_degs.append(test_deg)
         test_input_deg = any(test_degs)
         test_input_hms = (hms is not None)
         test_input_rad = (radians is not None)
@@ -114,16 +111,22 @@ class Angle:
         h, m, s = [abs(x) for x in self.hms]
         minutes = np.abs(self.minutes)
         seconds = np.abs(self.seconds)
-        a = "helisol.Angle\n"
-        try:
-            b = f"""{sign}{round_deg}°{minutes}'{seconds:.2f}" """
+        a = "helisol.Angle"
+        try:  # angle with single value
+            b = f"""\n{sign}{round_deg}°{minutes}'{seconds:.2f}" """
             c = f"[{sign}{h}h{m}m{s:.2f}s]\n"
-        except TypeError:
-            b = f"""{sign}{round_deg}°{minutes}'{np.round(seconds, 2)} """
-            c = f"[{sign}{h}h{m}m{np.round(s, 2)}s]\n"
+        except TypeError:  # array
+            b = " (array of angles)"
+            c = "\n"
         d = f'{self.degrees} [°]\n'
         e = f'{self.radians} [rad]'
         return a + b + c + d + e
+
+    def __eq__(self, other):
+        return (self.degrees == other.degrees)
+
+    def __lt__(self, other):
+        return (self.degrees < other.degrees)
 
     def __add__(self, other):
         return Angle(degrees=self.degrees + other.degrees)

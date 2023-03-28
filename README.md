@@ -136,6 +136,9 @@ a * 2
 2 * a
 a / 2
 - a
+a < b
+a == b
+# and other comparisons
 
 # And combinations, e.g.
 (a - b) / 4
