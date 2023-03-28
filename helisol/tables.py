@@ -24,7 +24,7 @@ import datetime
 import pandas as pd
 from oclock import parse_time
 
-from .general import Time
+from .general import Time, Angle
 from .sun import SunObservation
 from .locations import Location
 
@@ -116,6 +116,8 @@ def generate_table(location, start, end, interval, columns=column_names):
 def sunset_table(location, start, end, refract=True, point='top', rounding='second'):
     """Create able with sunrise, noon and sunsets between specified dates.
 
+    NOTE: it can take a little while (~ 1 second per requested day).
+
     Parameters
     ----------
      - location: Location name from JSON database,
@@ -155,7 +157,7 @@ def sunset_table(location, start, end, refract=True, point='top', rounding='seco
             else:
                 ppty_func = 'actual_' + ppty
                 time_func = _get_value(obs, ppty_func)
-                ftime = time_func(refract=refract, point=point)
+                ftime = time_func(refract=refract, point=point, precision=Angle(hms=(0, 0, 0.5)))
             ll.append(ftime.rounded_to(rounding).utc.time())
         data[name] = ll
 

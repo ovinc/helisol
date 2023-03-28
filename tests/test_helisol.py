@@ -16,7 +16,7 @@ def predict_event(row, event='sunrise'):
     obs = SunObservation((47, 2), utc_time=row['Date'])
     if event in ('sunrise', 'sunset'):
         ppty = 'actual_' + event
-        event_time = getattr(obs, ppty)(point='center')
+        event_time = getattr(obs, ppty)(point='center', precision=Angle(hms=(0, 0, 0.5)))
     else:
         event_time = getattr(obs, event)
     return event_time.utc.time()

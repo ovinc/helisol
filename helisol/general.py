@@ -81,10 +81,17 @@ class Angle:
         - same for h, m, s
         - ValueError raised if input has mixed units between °, hms, rad
         """
+        # ATTENTION the nature of the tests below can significantly reduce
+        # speed of some operations, e.g. calculating sunsets, sunrises etc.
         test_degs = []
         for x in (degrees, minutes, seconds):
-            test_deg = (np.abs(np.array(x)) > 0).any()
-            test_degs.append(test_deg)
+            try:
+                test_deg = bool(abs(x) > 0)
+            except ValueError:  # array
+                test_deg = (abs(x) > 0).any()
+            finally:
+                test_degs.append(test_deg)
+
         test_input_deg = any(test_degs)
         test_input_hms = (hms is not None)
         test_input_rad = (radians is not None)
