@@ -235,10 +235,21 @@ class SunObservation:
         - event: 'sunrise' or 'sunset'
         - refract: (default: True): take into account refraction or not
         - point: consider 'center', 'top', or 'bottom' of the sun
-        - obstacle: angular height of obstacle masking the sun
+        - obstacle: angular height of obstacle masking the sun (Angle object)
+                    or function of the azimuth returning an Angle object.
         - precision: which (angular) tolerance to consider matching heights
+                     NOTE: cannot be lower than 0.0002° (or 0.7 arcseconds or
+                     0.05 time-seconds) because one runs into precision
+                     limitations for standard floats in Python.
         - print_details: print info on the iteration / convergence process
         """
+        try:
+            obstacle.degrees
+        except AttributeError:
+            obstacle_height = obstacle                # obstacle is func(azimuth)
+        else:
+            obstacle_height = lambda x: obstacle      # obstacle is an angle
+
         coeffs = {'sunrise': -1, 'sunset': 1}
         point_coeff = {'center': 0, 'bottom': -1, 'top': 1}
         c = coeffs[event]
@@ -254,13 +265,14 @@ class SunObservation:
             obs_search.update(utc_time=time)
 
             h0 = obs_search.height
+            az = obs_search.azimuth
             diam = obs_search.sun.angular_diameter
 
             h = h0 + p * diam / 2
             if refract:
                 h += refraction(obs_search.height)
 
-            return (h - obstacle).degrees
+            return (h - obstacle_height(az)).degrees
 
         def mvtime(f0, step=1e-4, max_it=1e4):
             """Iterative search."""
@@ -313,7 +325,12 @@ class SunObservation:
             if results['found']:
                 return manage_result(results)
             else:
-                msg = f'Impossible to converge {event} search within tolerance'
+                msg = f'Impossible to converge {event} search within tolerance. '
+                if precision.degrees < 0.0002:
+                    msg += f'This is probably because required precision of {precision.degrees}° is too high. '
+                    msg += 'Please try with a precision larger than 0.0002°.\n'
+                results['iterations'] = total_iterations
+                msg += str(results)
                 raise RuntimeError(msg)
 
     def actual_sunrise(self, *args, point='top', **kwargs):
@@ -323,8 +340,12 @@ class SunObservation:
         ----------
         - refract: (default: True): take into account refraction or not
         - point: consider 'center', 'top', or 'bottom' of the sun
-        - obstacle: angular height of obstacle masking the sun
+        - obstacle: angular height of obstacle masking the sun (Angle object)
+                    or function of the azimuth returning an Angle object.
         - precision: which (angular) tolerance to consider matching heights
+                     NOTE: cannot be lower than 0.0002° (or 0.7 arcseconds or
+                     0.05 time-seconds) because one runs into precision
+                     limitations for standard floats in Python.
         - print_details: print info on the iteration / convergence process
         """
         return self._actual_event(event='sunrise', *args, point=point, **kwargs)
@@ -336,8 +357,12 @@ class SunObservation:
         ----------
         - refract: (default: True): take into account refraction or not
         - point: consider 'center', 'top', or 'bottom' of the sun
-        - obstacle: angular height of obstacle masking the sun
+        - obstacle: angular height of obstacle masking the sun (Angle object)
+                    or function of the azimuth returning an Angle object.
         - precision: which (angular) tolerance to consider matching heights
+                     NOTE: cannot be lower than 0.0002° (or 0.7 arcseconds or
+                     0.05 time-seconds) because one runs into precision
+                     limitations for standard floats in Python.
         - print_details: print info on the iteration / convergence process
         """
         return self._actual_event(event='sunset', *args, point=point, **kwargs)

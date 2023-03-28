@@ -79,7 +79,16 @@ class Angle:
         - same for h, m, s
         - ValueError raised if input has mixed units between °, hms, rad
         """
-        test_input_deg = any([abs(x) > 0 for x in (degrees, minutes, seconds)])
+        test_degs = []
+        for x in (degrees, minutes, seconds):
+            try:
+                test_deg = bool(abs(x) > 0)
+            except ValueError:  # array
+                test_deg = (abs(x) > 0).any()
+            finally:
+                test_degs.append(test_deg)
+
+        test_input_deg = any(test_degs)
         test_input_hms = (hms is not None)
         test_input_rad = (radians is not None)
         if sum([test_input_deg, test_input_hms, test_input_rad]) > 1:
@@ -107,7 +116,7 @@ class Angle:
         seconds = np.abs(self.seconds)
         a = "helisol.Angle\n"
         try:
-            b = f"""{sign}{round_deg}°{minutes}'{seconds:.2f} """
+            b = f"""{sign}{round_deg}°{minutes}'{seconds:.2f}" """
             c = f"[{sign}{h}h{m}m{s:.2f}s]\n"
         except TypeError:
             b = f"""{sign}{round_deg}°{minutes}'{np.round(seconds, 2)} """
