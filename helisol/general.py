@@ -254,22 +254,22 @@ class AngleArray:
         return (self.degrees < other.degrees)
 
     def __add__(self, other):
-        return Angle(degrees=self.degrees + other.degrees)
+        return AngleArray(degrees=self.degrees + other.degrees)
 
     def __sub__(self, other):
-        return Angle(degrees=self.degrees - other.degrees)
+        return AngleArray(degrees=self.degrees - other.degrees)
 
     def __neg__(self):
-        return Angle(degrees=-self.degrees)
+        return AngleArray(degrees=-self.degrees)
 
     def __mul__(self, other):
-        return Angle(degrees=self.degrees * other)
+        return AngleArray(degrees=self.degrees * other)
 
     def __rmul__(self, other):
-        return Angle(degrees=other * self.degrees)
+        return AngleArray(degrees=other * self.degrees)
 
     def __truediv__(self, other):
-        return Angle(degrees=self.degrees / other)
+        return AngleArray(degrees=self.degrees / other)
 
     @property
     def radians(self):
@@ -292,24 +292,24 @@ class AngleArray:
         return 1 / np.tan(self.radians)
 
     def minus_pi_to_pi(self):
-        """Angle modulo 2*pi, between -pi and pi"""
+        """Array modulo 2*pi, between -pi and pi"""
         self._degrees = np.degrees(np.arctan2(self.sin(), self.cos()))
 
     @classmethod
     def arcsin(cls, value):
-        return Angle(radians=np.arcsin(value))
+        return AngleArray(radians=np.arcsin(value))
 
     @classmethod
     def arccos(cls, value):
-        return Angle(radians=np.arccos(value))
+        return AngleArray(radians=np.arccos(value))
 
     @classmethod
     def arctan(cls, value):
-        return Angle(radians=np.arctan(value))
+        return AngleArray(radians=np.arctan(value))
 
     @classmethod
     def arctan2(cls, x1, x2):
-        return Angle(radians=np.arctan2(x1, x2))
+        return AngleArray(radians=np.arctan2(x1, x2))
 
 
 class AngleFromDegrees(Angle):

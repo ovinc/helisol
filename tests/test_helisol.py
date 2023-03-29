@@ -92,7 +92,7 @@ def test_sunset():
 
 def test_actual_sunset():
     obs = SunObservation(location=(47, 2), utc_time='2023-03-15')
-    sunset = obs.actual_sunset(point='center').rounded_to('minute')
+    sunset = obs.actual_sunset(point='center', precision=0.002).rounded_to('minute')
     assert sunset.utc.hour == 17
     assert sunset.utc.minute == 56
 

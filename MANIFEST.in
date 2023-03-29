@@ -1,5 +1,6 @@
 include *.py
+include *.md
+include *.ipynb
 recursive-include tests *.py
 recursive-include data *.tsv
 include locations/global.json
-include *.md

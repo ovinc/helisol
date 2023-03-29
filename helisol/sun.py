@@ -264,7 +264,7 @@ class SunObservation:
         p = point_coeff[point]
 
         # Initial guess: ~7 minutes before sunrise (or after sunset) at horizon
-        f0 = self.sunrise.fraction_of_day + c * 5e-3
+        f0 = getattr(self, event).fraction_of_day + c * 5e-3
         obs_search = copy(self)
 
         def match_heights(f):
@@ -341,9 +341,9 @@ class SunObservation:
                 return manage_result(results)
             else:
                 msg = f'Impossible to converge {event} search within tolerance. '
-                if precision.degrees < 0.002:
-                    msg += f'This is probably because required precision of {precision.degrees}° is too high. '
-                    msg += 'Please try first with a precision larger than 0.002°.\n'
+                msg += f'This might be because required precision of {precision}° is too high '
+                msg += 'or because the input obstacle height is larger than the maximum height of the sun. '
+                msg += 'Please try first lower precision and/or lower obstacle height. '
                 results['iterations'] = total_iterations
                 msg += str(results)
                 raise RuntimeError(msg)

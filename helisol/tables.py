@@ -117,7 +117,7 @@ def sunset_table(location, start, end, refract=True, point='top', rounding='seco
     """Create able with sunrise, noon and sunsets between specified dates.
 
     NOTE: it can take a little while for large datasets
-          (~ 10 seconds for a month of data).
+          (~ 4-5 seconds for a month of data).
 
     Parameters
     ----------
