@@ -73,10 +73,7 @@ astronomical_unit = 149_597_870_700  # in meters
 
 @total_ordering
 class Angle:
-    """Store angles and retrieve them in degrees or radians.
-
-    Note: can also store arrays of angles.
-    """
+    """Store angles and retrieve them in degrees, radians or hours"""
     def __init__(self,
                  degrees=0, minutes=0, seconds=0,
                  hms=None,
@@ -86,7 +83,7 @@ class Angle:
 
         Notes:
         - By default, value is considered to be decimal degrees, e.g. Angle(10.7)
-        - degrees, hours, minutes, seconds can be floats and are added
+        - degrees, minutes, seconds can be floats and are added
           (but it's preferrable to use ints when using  deg, min, sec instead
            of decimal degrees)
         - same for h, m, s
@@ -94,51 +91,40 @@ class Angle:
         """
         # ATTENTION the nature of the tests below can significantly reduce
         # speed of some operations, e.g. calculating sunsets, sunrises etc.
-        test_degs = []
-        for x in (degrees, minutes, seconds):
-            try:
-                test_deg = bool(abs(x) > 0)
-            except ValueError:  # if array is passed, consider it as an input
-                test_deg = True
-            finally:
-                test_degs.append(test_deg)
-
-        test_input_deg = any(test_degs)
+        test_input_deg = any([bool(x) for x in (degrees, minutes, seconds)])
         test_input_hms = (hms is not None)
         test_input_rad = (radians is not None)
         if sum([test_input_deg, test_input_hms, test_input_rad]) > 1:
             raise ValueError('Cannot specify angle in more than one set of units')
 
         if test_input_rad:
-            # note: degrees etc. are set automatically thanks to setter
-            self.radians = radians
+            self._degrees = radians * 180 / np.pi
         elif test_input_hms:
             h, m, s = hms
-            self.degrees = 15 * (h + m / 60 + s / 3600)
+            self._degrees = 15 * (h + m / 60 + s / 3600)
         else:
-            self.degrees = degrees + minutes / 60 + seconds / 3600
+            self._degrees = degrees + minutes / 60 + seconds / 3600
 
     def __repr__(self):
-        if (np.array(self.degrees) < 0).all():
-            sign = '-'
-        elif (np.array(self.degrees) < 0).any():
-            sign = '+/-'
-        else:
-            sign = ''
-        round_deg = np.abs(np.int_(self.degrees))
+        sign = '-' if self.sign < 0 else ''
+        degrees = abs(int(self.degrees))
+        minutes = abs(self.minutes)
+        seconds = abs(self.seconds)
         h, m, s = [abs(x) for x in self.hms]
-        minutes = np.abs(self.minutes)
-        seconds = np.abs(self.seconds)
         a = "helisol.Angle"
-        try:  # angle with single value
-            b = f"""\n{sign}{round_deg}°{minutes}'{seconds:.2f}" """
-            c = f"[{sign}{h}h{m}m{s:.2f}s]\n"
-        except TypeError:  # array
-            b = " (array of angles)"
-            c = "\n"
+        b = f"""\n{sign}{degrees}°{minutes}'{seconds:.2f}" """
+        c = f"[{sign}{h}h{m}m{s:.2f}s]\n"
         d = f'{self.degrees} [°]\n'
         e = f'{self.radians} [rad]'
         return a + b + c + d + e
+
+    @property
+    def sign(self):
+        """1 if angle is positive or zero, -1 if negative"""
+        if self.degrees == 0:
+            return 1
+        else:
+            return (int(self.degrees > 0)) - (int(self.degrees < 0))
 
     def __eq__(self, other):
         return (self.degrees == other.degrees)
@@ -168,43 +154,130 @@ class Angle:
     def radians(self):
         return self._degrees * np.pi / 180  # much faster than np.radians() for single values
 
-    @radians.setter
-    def radians(self, value):
-        self._degrees = value * 180 / np.pi  # much faster than np.degrees() for single values
-
     @property
     def degrees(self):
         return self._degrees
 
-    @degrees.setter
-    def degrees(self, value):
-        self._degrees = value
-
     @property
-    def hms(self):
-        """Only for info, not settable"""
-        h_decimal = self.degrees / 15
-        s = np.sign(h_decimal)
-        h_abs = np.abs(h_decimal)
-        h = np.int_(h_decimal)
-        m = np.int_(s * 60 * np.remainder(h_abs, 1))
-        s = s * 60 * np.remainder(h_abs * 60, 1)
-        return (h, m, s)
+    def decimal_minutes(self):
+        return 60 * (self.degrees % self.sign)
 
     @property
     def minutes(self):
-        """Only for info, not settable"""
-        s = np.sign(self.degrees)
-        deg_abs = np.abs(self.degrees)
-        # if s in outside of int_(), returns floats instead of ints
-        return np.int_(s * 60 * np.remainder(deg_abs, 1))
+        return int(self.decimal_minutes)
 
     @property
     def seconds(self):
         """Only for info, not settable"""
-        s = np.sign(self.degrees)
-        deg_abs = np.abs(self.degrees)
-        return s * 60 * np.remainder(deg_abs * 60, 1)
+        return 60 * (self.decimal_minutes % self.sign)
+
+    @property
+    def hms(self):
+        """Tuple hours (int), minutes (int), seconds (float)"""
+        h_decimal = self.degrees / 15
+        h = int(h_decimal)
+        m_decimal = 60 * (h_decimal % self.sign)
+        m = int(m_decimal)
+        s = 60 * (m_decimal % self.sign)
+        return (h, m, s)
+
+    def sin(self):
+        return math.sin(self.radians)
+
+    def cos(self):
+        return math.cos(self.radians)
+
+    def tan(self):
+        return math.tan(self.radians)
+
+    def cotan(self):
+        return 1 / math.tan(self.radians)
+
+    def minus_pi_to_pi(self):
+        """Angle modulo 2*pi, between -pi and pi"""
+        self._degrees = math.atan2(self.sin(), self.cos()) * 180 / np.pi
+
+    @classmethod
+    def arcsin(cls, value):
+        return Angle(radians=math.asin(value))
+
+    @classmethod
+    def arccos(cls, value):
+        return Angle(radians=math.acos(value))
+
+    @classmethod
+    def arctan(cls, value):
+        return Angle(radians=math.atan(value))
+
+    @classmethod
+    def arctan2(cls, x1, x2):
+        return Angle(radians=math.atan2(x1, x2))
+
+
+@total_ordering
+class AngleArray:
+    """Store arrays of angles and retrieve them in degrees or radians."""
+    def __init__(self, degrees=None, minutes=None, seconds=None, radians=None):
+        """Input angle in degrees (+ minutes/seconds), or in radians.
+
+        Notes:
+        - By default, value is considered to be decimal degrees
+        - degrees, minutes, seconds can be floats and are added
+          (but it's preferrable to use ints when using  deg, min, sec instead
+           of decimal degrees)
+        - ValueError raised if input has mixed units between ° and rad
+        """
+        test_input_deg = any([x is not None for x in (degrees, minutes, seconds)])
+        test_input_rad = (radians is not None)
+        if sum([test_input_deg, test_input_rad]) > 1:
+            raise ValueError('Cannot specify angle in more than one set of units')
+
+        if radians is not None:
+            self._degrees = np.degrees(radians)
+            return
+
+        val1 = np.array(degrees) if degrees is not None else 0
+        val2 = np.array(minutes) / 60 if minutes is not None else 0
+        val3 = np.array(seconds) / 3600 if seconds is not None else 0
+        self._degrees = val1 + val2 + val3
+
+    def __repr__(self):
+        a = "helisol.AngleArray"
+        b = f'{self.degrees} [°]\n'
+        c = f'{self.radians} [rad]'
+        return a + b + c
+
+    def __eq__(self, other):
+        return (self.degrees == other.degrees)
+
+    def __lt__(self, other):
+        return (self.degrees < other.degrees)
+
+    def __add__(self, other):
+        return Angle(degrees=self.degrees + other.degrees)
+
+    def __sub__(self, other):
+        return Angle(degrees=self.degrees - other.degrees)
+
+    def __neg__(self):
+        return Angle(degrees=-self.degrees)
+
+    def __mul__(self, other):
+        return Angle(degrees=self.degrees * other)
+
+    def __rmul__(self, other):
+        return Angle(degrees=other * self.degrees)
+
+    def __truediv__(self, other):
+        return Angle(degrees=self.degrees / other)
+
+    @property
+    def radians(self):
+        return np.radians(self._degrees)
+
+    @property
+    def degrees(self):
+        return self._degrees
 
     def sin(self):
         return np.sin(self.radians)
@@ -220,7 +293,7 @@ class Angle:
 
     def minus_pi_to_pi(self):
         """Angle modulo 2*pi, between -pi and pi"""
-        self.radians = np.arctan2(self.sin(), self.cos())
+        self._degrees = np.degrees(np.arctan2(self.sin(), self.cos()))
 
     @classmethod
     def arcsin(cls, value):
@@ -243,28 +316,28 @@ class AngleFromDegrees(Angle):
     """Shortcut for faster execution of Angle when known to instantiate from degrees"""
 
     def __init__(self, value=0):
-        self.degrees = value
+        self._degrees = value
 
 
 class AngleFromMinutes(Angle):
     """Shortcut for faster execution of Angle when known to instantiate from arcminutes"""
 
     def __init__(self, value=0):
-        self.degrees = value / 60
+        self._degrees = value / 60
 
 
 class AngleFromSeconds(Angle):
     """Shortcut for faster execution of Angle when known to instantiate from arcseconds"""
 
     def __init__(self, value=0):
-        self.degrees = value / 3600
+        self._degrees = value / 3600
 
 
 class AngleFromRadians(Angle):
     """Shortcut for faster execution of Angle when known to instantiate from radians"""
 
     def __init__(self, value=0):
-        self.radians = value
+        self._degrees = value * 180 / np.pi
 
 
 # ===================== Convenience functions on angles ======================

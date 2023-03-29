@@ -19,7 +19,7 @@ The package also includes tools to store and manipulate angles (`Angle` class) a
 
 - Right ascension and equation of time are within the displayed precision of each other (1 second in time)
 
-- Declination deviates less than 2.5 arc-seconds (0.17 seconds in time).
+- Declination deviates less than 2.5 arc-seconds (0.0007°, or 0.17 seconds in time).
 
 
 # Install
@@ -144,13 +144,9 @@ a == b
 (a - b) / 4
 cos(2 * a - b)
 
-# access values in different units
+# access values in different units (decimal)
 a.radians
 a.degrees
-
-# Modify value in-place
-a.degrees = 60
-a.radians = np.pi / 4
 
 # Read-only info on minutes and seconds of angle
 a.minutes
@@ -170,6 +166,13 @@ b = AngleFromRadians(np.pi / 6)
 c = AngleFromMinutes(1.5)
 d = 90 * AngleFromSeconds(1)
 a - b + c - d
+```
+
+It is also possible to use arrays with the `AngleArray` class, e.g.
+```python
+from helisol import AngleArray
+a = AngleArray(degrees=[44.5, 2.5, 3], minutes=[30, 30, 0])
+a.tan()
 ```
 
 ## Distances

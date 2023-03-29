@@ -20,7 +20,7 @@
 # If not, see <https://www.gnu.org/licenses/>
 
 
-from .general import Time, Distance, Angle
+from .general import Time, Distance, Angle, AngleArray
 from .general import AngleFromRadians, AngleFromDegrees, AngleFromMinutes, AngleFromSeconds
 from .general import sin, cos, tan, cotan, refraction
 from .general import astronomical_unit

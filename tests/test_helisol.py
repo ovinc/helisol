@@ -6,7 +6,7 @@ import numpy as np
 
 import helisol
 from helisol import Sun, Time, SunObservation, Distance, astronomical_unit
-from helisol import Angle, AngleFromDegrees, AngleFromRadians
+from helisol import Angle, AngleArray, AngleFromDegrees, AngleFromRadians
 from helisol import AngleFromMinutes, AngleFromSeconds
 from helisol import refraction
 
@@ -52,6 +52,12 @@ def test_specialized_angle():
     c = AngleFromMinutes(1.5)
     d = 90 * AngleFromSeconds(1)
     assert round((a - b + c - d).seconds, 2) == 0
+
+
+def test_angle_array():
+    """Test AngleArray class."""
+    a = AngleArray(degrees=[44.5, 2.5, 3], minutes=[30, 30, 0])
+    assert round(a.tan()[0], 6) == 1
 
 
 def test_distance():
