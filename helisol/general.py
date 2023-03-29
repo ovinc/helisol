@@ -24,6 +24,7 @@
 
 
 import datetime
+import math
 from dateutil.parser import parse
 from functools import total_ordering
 import numpy as np
@@ -51,7 +52,7 @@ planet_coeffs = {'Venus 1': (351.52, 22518.443),
                  'Jupiter': (157.23, 32964.467),
                  'Moon': (297.85, 445267.112),
                  'Long period': (252.08, 20.190),
-                 'H': (0, 0)}
+                 'H': (353.40, 65928.7155)}
 
 # amplitudes for longitude (left) and sun-earth radius (right)
 planet_amplitudes = {'Venus 1': (134e-5, 5.43e-6),
@@ -453,6 +454,55 @@ class Time:
 # ================================ Refraction ================================
 
 
+def refraction_saemundsson_math(true_height):
+    """Refraction angle from true height (Saemundsson 1986).
+
+    Uses math.tan (faster for single values)
+
+    Parameters
+    ----------
+    true_height: angle in degrees
+
+    Output
+    ------
+    Refraction angle in arc-minutes
+    """
+    y = true_height + (10.3 / (true_height + 5.11))
+    return 1.02 / math.tan(y * np.pi / 180)
+
+
+def refraction_saemundsson_np(true_height):
+    """Refraction angle from true height (Saemundsson 1986)
+
+    Uses np.tan (for arrays)
+
+    Parameters
+    ----------
+    true_height: angle in degrees
+
+    Output
+    ------
+    Refraction angle in arc-minutes
+    """
+    y = true_height + (10.3 / (true_height + 5.11))  # in degrees
+    return 1.02 / np.tan(y * np.pi / 180)
+
+
+def refraction_bennett_np(apparent_height=None):
+    """Refraction angle from apparent height (Bennett 1982)
+
+    Parameters
+    ----------
+    apparent_height: angle in degrees
+
+    Output
+    ------
+    Refraction angle in arc-minutes
+    """
+    y0 = apparent_height + 7.31 / (apparent_height + 4.4)  # in degrees
+    return 1 / np.tan(y0 * np.pi / 180)
+
+
 def refraction(true_height=None, apparent_height=None):
     """Refraction angle, either from true height or apparent height.
 
@@ -478,10 +528,6 @@ def refraction(true_height=None, apparent_height=None):
     refraction(apparent_height=Angle(minutes=66))
     """
     if true_height is not None:
-        h = true_height.degrees
-        y = Angle(degrees=h + (10.3 / (h + 5.11)))
-        return Angle(minutes=1.02 / tan(y))
+        return AngleFromMinutes(refraction_saemundsson_np(true_height.degrees))
     else:
-        h0 = apparent_height.degrees
-        y0 = Angle(degrees=h0 + 7.31 / (h0 + 4.4))
-        return Angle(minutes=cotan(y0))
+        return AngleFromMinutes(refraction_bennett_np(apparent_height.degrees))

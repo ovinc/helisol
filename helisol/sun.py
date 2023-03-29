@@ -25,7 +25,7 @@ import numpy as np
 
 from .general import CONSTANTS, Angle, Time
 from .general import AngleFromDegrees
-from .general import refraction, sin, cos, tan
+from .general import refraction, refraction_saemundsson_math, sin, cos, tan
 from .earth import Earth
 from .locations import Location
 
@@ -226,7 +226,7 @@ class SunObservation:
                       refract=True,
                       point='center',
                       obstacle=None,
-                      precision=None,
+                      precision=0.01,
                       print_details=False):
         """Find actual moment of sunset or sunrise (with refraction / obstacles).
         (iteratively)
@@ -237,7 +237,7 @@ class SunObservation:
         - refract: (default: True): take into account refraction or not
         - point: consider 'center', 'top', or 'bottom' of the sun
         - obstacle: angular height of obstacle masking the sun (Angle object)
-                    or function of the azimuth returning an Angle object.
+                    or function of the azimuth (°) returning an angle (°).
                     By default, no obstacle (obstacle angle of 0°).
         - precision: which (angular) tolerance to consider matching heights
                      NOTE: cannot be lower than 0.0002° (or 0.7 arcseconds or
@@ -247,14 +247,16 @@ class SunObservation:
                      Default: 0.01°.
         - print_details: print info on the iteration / convergence process
         """
-        obstacle = AngleFromDegrees(0) if obstacle is None else obstacle
-        precision = AngleFromDegrees(0.01) if precision is None else precision
-        try:
-            obstacle.degrees
-        except AttributeError:
-            obstacle_height = obstacle                # obstacle is func(azimuth)
-        else:
-            obstacle_height = lambda x: obstacle      # obstacle is an angle
+        consider_obstacle = bool(obstacle)
+        if consider_obstacle:
+            try:
+                obstacle(0)
+            except TypeError:
+                obstacle_height = obstacle      # obstacle is an angle
+                obstacle_is_func = False
+            else:
+                obstacle_height = obstacle      # obstacle is func(azimuth)
+                obstacle_is_func = True
 
         coeffs = {'sunrise': -1, 'sunset': 1}
         point_coeff = {'center': 0, 'bottom': -1, 'top': 1}
@@ -270,19 +272,26 @@ class SunObservation:
             time = Time(obs_search.time, fraction_of_day=f)
             obs_search.update(utc_time=time)
 
-            h0 = obs_search.height
-            az = obs_search.azimuth
-            diam = obs_search.sun.angular_diameter
+            h = obs_search.height.degrees
+            az = obs_search.azimuth.degrees
 
-            h = h0 + p * diam / 2
+            if point in ('top', 'bottom'):
+                diam = obs_search.sun.angular_diameter.degrees
+                h += p * diam / 2
+
             if refract:
-                h += refraction(obs_search.height)
+                h += refraction_saemundsson_math(h) / 60  # minutes to degrees
 
-            return (h - obstacle_height(az)).degrees
+            if consider_obstacle:
+                if obstacle_is_func:
+                    h -= obstacle_height(az)
+                else:
+                    h -= obstacle_height
+
+            return h
 
         def mvtime(f0, step=1e-4, max_it=1e4):
             """Iterative search."""
-            tolerance = precision.degrees
             i = 0
             f = f0
             m0 = match_heights(f0)
@@ -294,7 +303,7 @@ class SunObservation:
 
             while not (found or stop or max_iterations):
                 m = match_heights(f)
-                if abs(m) < tolerance:
+                if abs(m) < precision:
                     found = True
                 elif np.sign(m) == - np.sign(m0):
                     stop = True
@@ -347,7 +356,7 @@ class SunObservation:
         - refract: (default: True): take into account refraction or not
         - point: consider 'center', 'top', or 'bottom' of the sun
         - obstacle: angular height of obstacle masking the sun (Angle object)
-                    or function of the azimuth returning an Angle object.
+                    or function of the azimuth (°) returning an angle (°).
                     By default, no obstacle (obstacle angle of 0°).
         - precision: which (angular) tolerance to consider matching heights
                      NOTE: cannot be lower than 0.0002° (or 0.7 arcseconds or
@@ -367,7 +376,7 @@ class SunObservation:
         - refract: (default: True): take into account refraction or not
         - point: consider 'center', 'top', or 'bottom' of the sun
         - obstacle: angular height of obstacle masking the sun (Angle object)
-                    or function of the azimuth returning an Angle object.
+                    or function of the azimuth (°) returning an angle (°).
                     By default, no obstacle (obstacle angle of 0°).
         - precision: which (angular) tolerance to consider matching heights
                      NOTE: cannot be lower than 0.0002° (or 0.7 arcseconds or

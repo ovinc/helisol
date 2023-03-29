@@ -160,6 +160,30 @@ a.seconds
 a.hms
 ```
 
+If having performance issues with `Angle`, it is possible to increase speed by shortcutting tests of units during instantiation, using more specialized `Angle` subclasses:
+
+```python
+from helisol import AngleFromDegrees, AngleFromRadians
+from helisol import AngleFromMinutes, AngleFromSeconds
+a = AngleFromDegrees(30)
+b = AngleFromRadians(np.pi / 6)
+c = AngleFromMinutes(1.5)
+d = 90 * AngleFromSeconds(1)
+a - b + c - d
+```
+
+## Distances
+
+Distances are managed by the `Distance` class
+
+```python
+from helisol import Distance
+d = Distance(au=2.5)  # 2.5 astronomical units
+d.m
+d.km
+d.au
+```
+
 
 ## Date / times
 

@@ -6,7 +6,8 @@ import numpy as np
 
 import helisol
 from helisol import Sun, Time, SunObservation, Distance, astronomical_unit
-from helisol import Angle, AngleFromDegrees
+from helisol import Angle, AngleFromDegrees, AngleFromRadians
+from helisol import AngleFromMinutes, AngleFromSeconds
 from helisol import refraction
 
 DATA_FOLDER = Path(helisol.__file__).parent.parent / 'data'
@@ -19,7 +20,7 @@ def predict_event(row, event='sunrise'):
     obs = SunObservation((47, 2), utc_time=row['Date'])
     if event in ('sunrise', 'sunset'):
         ppty = 'actual_' + event
-        event_time = getattr(obs, ppty)(point='center', precision=AngleFromDegrees(0.002))
+        event_time = getattr(obs, ppty)(point='center', precision=0.002)
     else:
         event_time = getattr(obs, event)
     return event_time.utc.time()
@@ -42,6 +43,21 @@ def test_angle():
     b = Angle(radians=(np.pi * 60 / 180))
     c = Angle(hms=(2, 0, 0))
     assert round((a + b - c).cos(), 3) == 0.5
+
+
+def test_specialized_angle():
+    """Test faster Angle implementations"""
+    a = AngleFromDegrees(30)
+    b = AngleFromRadians(np.pi / 6)
+    c = AngleFromMinutes(1.5)
+    d = 90 * AngleFromSeconds(1)
+    assert round((a - b + c - d).seconds, 2) == 0
+
+
+def test_distance():
+    """Test Distance class"""
+    d = Distance(au=1)
+    assert round(d.km * 1000 / astronomical_unit, 6) == 1
 
 
 def test_sun():

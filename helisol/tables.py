@@ -158,7 +158,7 @@ def sunset_table(location, start, end, refract=True, point='top', rounding='seco
             else:
                 ppty_func = 'actual_' + ppty
                 time_func = _get_value(obs, ppty_func)
-                ftime = time_func(refract=refract, point=point, precision=AngleFromDegrees(0.002))
+                ftime = time_func(refract=refract, point=point, precision=0.002)
             ll.append(ftime.rounded_to(rounding).utc.time())
         data[name] = ll
 
