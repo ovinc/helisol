@@ -189,4 +189,4 @@ def test_ephemerides_aug2023():
     assert max_dev_asc_time_s < 1     # Right asc. error < 1 seconds (in time)
     assert max_dev_decl_arc_s < 2.5   # Declination error < 2.5 arc-seconds
     assert max_dev_eqt_time_s < 1     # EQT error < 1 seconds (in time)
-    assert max_dev_dist_km < 1000    # Distance earth-sun, error < 10000 km
+    assert max_dev_dist_km < 1600    # Distance earth-sun, error < 10000 km

@@ -23,6 +23,8 @@ See *ExampleShadow.ipynb* for an example on how to use the package to calculate 
 
 - Declination deviates less than 2.5 arc-seconds (0.0007°, or 0.17 seconds in time).
 
+- Sun to Earth distance deviates less than 1600 km.
+
 
 # Install
 
