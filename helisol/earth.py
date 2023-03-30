@@ -22,10 +22,15 @@
 
 import numpy as np
 
-from .general import CONSTANTS, astronomical_unit
+from .general import CONSTANTS
 from .general import Angle, Time, Distance
 from .general import AngleFromDegrees, AngleFromSeconds, AngleFromRadians
 from .general import sin, cos, tan
+
+
+perturb_planet_coeffs = CONSTANTS['planet perturbation coefficients']
+perturb_planet_longitude = CONSTANTS['planet perturbation longitude']
+perturb_planet_radius = CONSTANTS['planet perturbation radius']
 
 
 class EarthOrbit:
@@ -88,35 +93,31 @@ class EarthOrbit:
         """Δaberr"""
         return AngleFromSeconds(-20.5)
 
+    def correc_planets_angle(self, name):
+        """name is one of the Meeus coefficient name ('A', 'B', etc.)."""
+        t = self.time.julian_centuries
+        coeffs = perturb_planet_coeffs[name]
+        a = 0
+        for i, coeff in enumerate(coeffs):
+            a += coeff * t**i
+        return AngleFromDegrees(a)
+
     @property
     def correc_planets(self):
         """Perturbations from planets, moon, etc. on longitude"""
-        t = self.time.julian_centuries
         perturb = AngleFromDegrees()
-        funcs = cos, cos, cos, sin, sin, sin  # the last one is not taken into account (coeff 0)
-        coeffs = CONSTANTS['planet perturbation coefficients']
-        ampls = CONSTANTS['planet perturbation amplitudes']
-        for coeff, ampl, func in zip(coeffs.values(), ampls.values(), funcs):
-            a0, a1 = coeff
-            A, _ = ampl
-            ag = AngleFromDegrees((a0 + a1 * t))
-            corr = AngleFromDegrees((A * func(ag)))
-            perturb += corr
+        for coeff_name, (ampl, func) in perturb_planet_longitude.items():
+            ag = self.correc_planets_angle(coeff_name)
+            perturb += AngleFromDegrees(ampl * getattr(ag, func)())
         return perturb
 
     @property
     def correc_planets_distance(self):
         """Perturbations from planets, moon, etc. on earth-sun distance"""
-        t = self.time.julian_centuries
         perturb = 0
-        funcs = sin, sin, sin, cos, sin, sin  # second to last not taken into account
-        coeffs = CONSTANTS['planet perturbation coefficients']
-        ampls = CONSTANTS['planet perturbation amplitudes']
-        for coeff, ampl, func in zip(coeffs.values(), ampls.values(), funcs):
-            a0, a1 = coeff
-            _, A = ampl
-            ag = AngleFromDegrees((a0 + a1 * t))
-            perturb += A * func(ag)
+        for coeff_name, (ampl, func) in perturb_planet_radius.items():
+            ag = self.correc_planets_angle(coeff_name)
+            perturb += ampl * getattr(ag, func)()
         return Distance(au=perturb)
 
 

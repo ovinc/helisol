@@ -47,23 +47,28 @@ CONSTANTS['nutation coefficients'] = (125.04, -1934.136)
 CONSTANTS['anomaly iterations'] = 3
 CONSTANTS['sunset iterations'] = 2
 
-planet_coeffs = {'Venus 1': (351.52, 22518.443),
-                 'Venus 2': (253.14, 45036.886),
-                 'Jupiter': (157.23, 32964.467),
-                 'Moon': (297.85, 445267.112),
-                 'Long period': (252.08, 20.190),
-                 'H': (353.40, 65928.7155)}
+perturb_planet_coeffs = {'A': (153.23, 22518.7541),              # Venus 1
+                         'B': (216.57, 45037.5082),              # Venus 2
+                         'C': (312.69, 32964.3577),              # Jupiter
+                         'D': (350.74, 445267.1142, -0.00144),   # Moon
+                         'E': (231.19, 20.20),                   # Long period
+                         'H': (353.40, 65928.7155)}              # H
 
-# amplitudes for longitude (left) and sun-earth radius (right)
-planet_amplitudes = {'Venus 1': (134e-5, 5.43e-6),
-                     'Venus 2': (153e-5, 15.75e-6),
-                     'Jupiter': (200e-5, 16.27e-6),
-                     'Moon': (180e-5, 30.76e-6),
-                     'Long period': (196e-5, 0),
-                     'H': (0, 9.27e-6)}
+perturb_planet_longitude = {'A': (134e-5, 'cos'),
+                            'B': (154e-5, 'cos'),
+                            'C': (200e-5, 'cos'),
+                            'D': (179e-5, 'sin'),
+                            'E': (178e-5, 'sin')}
 
-CONSTANTS['planet perturbation coefficients'] = planet_coeffs
-CONSTANTS['planet perturbation amplitudes'] = planet_amplitudes
+perturb_planet_radius = {'A': (5.43e-6, 'sin'),
+                         'B': (15.75e-6, 'sin'),
+                         'C': (16.27e-6, 'sin'),
+                         'D': (30.76e-6, 'cos'),
+                         'H': (9.27e-6, 'sin')}
+
+CONSTANTS['planet perturbation coefficients'] = perturb_planet_coeffs
+CONSTANTS['planet perturbation longitude'] = perturb_planet_longitude
+CONSTANTS['planet perturbation radius'] = perturb_planet_radius
 
 astronomical_unit = 149_597_870_700  # in meters
 
