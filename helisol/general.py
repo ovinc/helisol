@@ -48,12 +48,12 @@ CONSTANTS['anomaly iterations'] = 3
 CONSTANTS['sunset iterations'] = 2
 
 
-perturb_planet_coeffs = {'A': (351.52, 22518.443),              # Venus 1
-                         'B': (253.14, 45036.886),              # Venus 2
-                         'C': (157.23, 32964.467),              # Jupiter
-                         'D': (297.85, 445267.112),   # Moon
-                         'E': (252.08, 20.190),                   # Long period
-                         'H': (353.40, 65928.7155)}              # H
+perturb_planet_coeffs = {'A': (351.52, 22518.4428),         # Venus 1
+                         'B': (253.14, 45036.8857),         # Venus 2
+                         'C': (157.23, 32964.4673),         # Jupiter
+                         'D': (297.85, 445267.1117),        # Moon
+                         'E': (252.08, 20.190),             # Long period
+                         'H': (42.43, 65928.9358)}          # H
 
 perturb_planet_longitude = {'A': (134e-5, 'cos'),
                             'B': (153e-5, 'cos'),
@@ -61,11 +61,11 @@ perturb_planet_longitude = {'A': (134e-5, 'cos'),
                             'D': (180e-5, 'sin'),
                             'E': (196e-5, 'sin')}
 
-perturb_planet_radius = {'A': (5.43e-6, 'sin'),
-                         'B': (15.75e-6, 'sin'),
-                         'C': (16.27e-6, 'sin'),
-                         'D': (30.76e-6, 'cos'),
-                         'H': (9.27e-6, 'sin')}
+perturb_planet_radius = {'A': (5.42e-6, 'sin'),
+                         'B': (15.76e-6, 'sin'),
+                         'C': (16.28e-6, 'sin'),
+                         'D': (30.84e-6, 'cos'),
+                         'H': (9.25e-6, 'sin')}
 
 CONSTANTS['planet perturbation coefficients'] = perturb_planet_coeffs
 CONSTANTS['planet perturbation longitude'] = perturb_planet_longitude

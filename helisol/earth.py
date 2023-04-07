@@ -57,7 +57,8 @@ class EarthOrbit:
     @property
     def excentricity(self):
         """Excentricity of earth's orbit"""
-        return 0.016709 - 0.000042 * self.time.julian_centuries
+        t = self.time.julian_centuries
+        return 0.016_708_634 - 0.000_042_037 * t - 0.000_000_1267 * t**2
 
     @property
     def axial_tilt(self):
@@ -194,6 +195,6 @@ class Earth:
     def distance(self):
         e = self.orbit.excentricity
         nu = self.true_anomaly
-        R = 1.0000002 * (1 - e**2) / (1 + e * cos(nu))
+        R = 1.000_001_018 * (1 - e**2) / (1 + e * cos(nu))
         ΔR = self.orbit.correc_planets_distance
         return Distance(au=R) + ΔR
