@@ -32,6 +32,13 @@ perturb_planet_coeffs = CONSTANTS['planet perturbation coefficients']
 perturb_planet_longitude = CONSTANTS['planet perturbation longitude']
 perturb_planet_radius = CONSTANTS['planet perturbation radius']
 
+durations_fdays = {'day': 1,         # durations in fractions of days
+                   'hour': 1 / 24,
+                   'minute': 1 / (24 * 60),
+                   'second': 1 / (24 * 3600)}
+
+extrem_funcs = {'min': np.argmin, 'max': np.argmax}
+
 
 class EarthOrbit:
     """Store general characteristics of earth orbit"""
@@ -120,6 +127,68 @@ class EarthOrbit:
             ag = self.correc_planets_angle(coeff_name)
             perturb += ampl * getattr(ag, func)()
         return Distance(au=perturb)
+
+    @staticmethod
+    def _find_local_extremum(date_min, date_max, kind='min', resolution='hour'):
+        """Resolution can be day, hour, minute, second"""
+        t1 = Time(date_min)
+        t2 = Time(date_max)
+        fmin = t1.fraction_of_day
+        fmax = fmin + (t2.utc - t1.utc).total_seconds() / (3600 * 24)
+        df = durations_fdays[resolution]
+        ff = np.arange(fmin, fmax, df)
+        times = [Time(t1, fraction_of_day=f) for f in ff]
+        earths = [Earth(time) for time in times]
+        radii = np.array([earth.distance.au for earth in earths])
+        i0 = extrem_funcs[kind](radii)
+        return Time(date_min, fraction_of_day=ff[i0])
+
+    @classmethod
+    def _find_extremum(cls, year, kind='min', resolution='minute'):
+        """Find perigee or apogee.
+
+        Parameters
+        ----------
+        year is e.g. 2023
+        kind is 'min' or 'max'
+        resolution in ('day', 'hour', 'minute', 'second')
+        """
+        start_date = 'Jan 01'
+        date_min = f'{start_date}, {year}'
+        date_max = f'{start_date}, {year + 1}'
+
+        for res in 'day', 'hour', 'minute', 'second':
+            date = cls._find_local_extremum(date_min=date_min,
+                                            date_max=date_max,
+                                            kind=kind,
+                                            resolution=res)
+            if res == resolution:
+                return date
+            f = date.fraction_of_day
+            df = durations_fdays[res]
+            fmin, fmax = f - df, f + df
+            date_min = Time(date, fraction_of_day=fmin)
+            date_max = Time(date, fraction_of_day=fmax)
+
+    def perihelion(self, resolution='minute'):
+        """Minimum sun-earth distance.
+
+        Parameter
+        ---------
+        - resolution (str): 'day', 'hour', 'minute' (default) or 'second'
+        """
+        year = self.time.utc.year
+        return self._find_extremum(year, kind='min', resolution=resolution)
+
+    def aphelion(self, resolution='minute'):
+        """Maximum sun-earth distance.
+
+        Parameter
+        ---------
+        - resolution (str): 'day', 'hour', 'minute' (default) or 'second'
+        """
+        year = self.time.utc.year
+        return self._find_extremum(year, kind='max', resolution=resolution)
 
 
 class Earth:

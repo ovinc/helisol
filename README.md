@@ -23,7 +23,7 @@ See *ExampleShadow.ipynb* for an example on how to use the package to calculate 
 
 - Declination deviates less than 2.5 arc-seconds (0.0007°, or 0.17 seconds in time).
 
-- Sun to Earth distance deviates less than 1600 km.
+- Sun to Earth distance deviates less than 1600 km; extracted aphelion and perihelion dates extracted from the extrema of this distance seem to be off by a few hours depending on the year.
 
 
 # Install
@@ -52,6 +52,10 @@ earth.update()
 
 # Update to specific time
 earth.update(utc_time='2023-03-21, 12:00')
+
+# Min and max sun-eath distance
+Earth(2019).orbit.perihelion()  # specific year
+Earth().orbit.aphelion()        # current year
 ```
 
 

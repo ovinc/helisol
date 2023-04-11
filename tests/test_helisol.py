@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 import helisol
-from helisol import Sun, Time, SunObservation, Distance, astronomical_unit
+from helisol import Earth, Sun, Time, SunObservation, Distance, astronomical_unit
 from helisol import Angle, AngleArray, AngleFromDegrees, AngleFromRadians
 from helisol import AngleFromMinutes, AngleFromSeconds
 from helisol import refraction
@@ -64,6 +64,20 @@ def test_distance():
     """Test Distance class"""
     d = Distance(au=1)
     assert round(d.km * 1000 / astronomical_unit, 6) == 1
+
+
+def test_aphelion():
+    """Test aphelion calculation from distance function"""
+    aph_time = Earth(2023).orbit.aphelion(resolution='hour')
+    assert aph_time.utc.month == 7
+    assert aph_time.utc.day == 6
+
+
+def test_perihelion():
+    """Test perihelion calculation from distance function"""
+    peri_time = Earth(2023).orbit.perihelion(resolution='hour')
+    assert peri_time.utc.month == 1
+    assert peri_time.utc.day == 4
 
 
 def test_sun():
