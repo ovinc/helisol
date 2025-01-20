@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "helisol"
+authors = [
+    {name = "Olivier Vincent", email = "ovinc.py@gmail.com"},
+]
+description = "Get precise position of sun in sky (height, azimuth) at given location and time, get sunrise and sunset time, generate sundials."
+readme = "README.md"
+requires-python = ">=3.7"
+keywords = [
+    "sun",
+    "position",
+    "azimuth",
+    "height",
+    "sunset",
+    "sunrise",
+    "noon",
+    "sundial",
+    "astronomy",
+    "angle",
+    "time",
+]
+license = {text = "GNU GPLv3"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+]
+dependencies = [
+    "numpy",
+    "pandas",
+    "oclock",
+    "importlib-metadata",
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/ovinc/helisol"
+Documentation = "https://github.com/ovinc/helisol/README.md"
+Repository = "https://github.com/ovinc/helisol.git"
+
+[tool.setuptools.packages.find]
+exclude = ["data",]
+
+[tool.setuptools_scm]
+# can be empty if no extra settings are needed, presence enables setuptools-scm
