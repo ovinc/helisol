@@ -68,32 +68,37 @@ def generate_table(location, start, end, interval, columns=column_names):
 
     Parameters
     ----------
-     - location: Location name from JSON database,
-                    [or] custom Location object
-                    [or] iterable (latitude, longitude) in degrees
-                    if None (default), use default location
+    location : str or Location or iterable or None
+        Location name from JSON database, [or] custom Location object
+        [or] iterable (latitude, longitude) in degrees
+        if None (default), use default location
 
-    - start: datetime, helisol.Time object, str or other datetime information (UTC)
+    start : datetime or helisol.Time or str or other
+        datetime information (UTC) for start date
 
-    - end: datetime, helisol.Time object, str or other datetime information (UTC)
+    end : datetime or helisol.Time or str or other
+        datetime information (UTC) for end date
 
-    - interval: str in the format 'hh:mm:ss', including '::10' for 10 secs
+    interval : str
+        interval in the format 'hh:mm:ss', including '::10' for 10 secs
 
-    - columns (optional): specify which properties and columns will be included
-                          (dict with sun attribute name as key and name of
-                           corresponding column as value)
+    columns : dict, optional
+        specify which properties and columns will be included (dict with sun
+        attribute name as key and name of corresponding column as value)
 
-    Output
-    ------
-    Pandas DataFrame
+    Returns
+    -------
+    pandas.DataFrame
 
     Examples
     --------
-    generate_table(location=(47, 2),
-                   start='March 1 12:00',
-                   end='March 31 12:00',
-                   interval='24::',
-                   columns={'azimuth': 'Azimuth (°)', 'height': 'Height (°)'})
+    >>> generate_table(
+            location=(47, 2),
+            start='March 1 12:00',
+            end='March 31 12:00',
+            interval='24::',
+            columns={'azimuth': 'Azimuth (°)', 'height': 'Height (°)'},
+        )
     """
     location = Location.parse(location)
     times = _generate_times(start=start, end=end, interval=interval)
@@ -118,24 +123,29 @@ def sunset_table(location, start, end, refract=True, point="top", rounding="seco
 
     Parameters
     ----------
-     - location: Location name from JSON database,
-                    [or] custom Location object
-                    [or] iterable (latitude, longitude) in degrees
-                    if None (default), use default location
+    location : str or Location or iterable or None
+        Location name from JSON database, [or] custom Location object
+        [or] iterable (latitude, longitude) in degrees
+        if None (default), use default location
 
-    - start: datetime, helisol.Time object, str or other datetime information (UTC)
+    start : datetime or helisol.Time or str or other
+        datetime information (UTC) for start date
 
-    - end: datetime, helisol.Time object, str or other datetime information (UTC)
+    end : datetime or helisol.Time or str or other
+        datetime information (UTC) for end date
 
-    - refract: Take refraction or not into account.
+    refract : bool
+        Take refraction or not into account.
 
-    - point: which point of sun to consider ('top', 'bottom', 'center')
+    point : str
+        which point of sun to consider ('top', 'bottom', 'center')
 
-    - rounding: 'second' or 'minute'
+    rounding : str
+        'second' or 'minute'
 
-    Output
-    ------
-    Pandas DataFrame
+    Returns
+    -------
+    pandas.DataFrame
     """
     times = _generate_times(start=start, end=end, interval="24::")
 
@@ -169,25 +179,26 @@ def extend_table(
 
     Parameters
     ----------
-    - data: pandas DataFrame
+    data : pandas.DataFrame
 
-     - location: Location name from JSON database,
-                    [or] custom Location object
-                    [or] iterable (latitude, longitude) in degrees
-                    if None (default), use default location
+    location : str or Location or iterable or None
+        Location name from JSON database, [or] custom Location object
+        [or] iterable (latitude, longitude) in degrees
+        if None (default), use default location
 
-    - date_column: name of the column containing dates in the pandas dataframe
+    date_column: name of the column containing dates in the pandas dataframe
 
-    - time_column: name of the column containing time in the pandas dataframe
+    - time_column : str
+        name of the column containing time in the pandas dataframe
 
-    - columns (optional): specify which properties and columns will be included
-                          (dict with sun attribute name as key and name of
-                           corresponding column as value)
+    columns : dict, optional
+        specify which properties and columns will be included (dict with sun
+        attribute name as key and name of corresponding column as value)
 
-    Example
-    -------
-    data = pd.read_excel('Data.xls')
-    extend_table(data, location=(47, 2))
+    Examples
+    --------
+    >>> data = pd.read_excel('Data.xls')
+    >>> extend_table(data, location=(47, 2))
     """
 
     def _calculate_angle(ppty, row):

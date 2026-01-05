@@ -66,13 +66,14 @@ class Location:
     def load(cls, name):
         """Create location object from name.
 
-        Parameter
-        ---------
-        name (str): name of location as stored in the JSON database
+        Parameters
+        ----------
+        name : str
+            name of location as stored in the JSON database
 
-        Example
-        -------
-        location = Location.load('Home')
+        Examples
+        --------
+        >>> location = Location.load('Home')
         """
         for filename in LOCATIONS_FILES:
             file = LOCATIONS_FOLDER / filename
@@ -88,13 +89,14 @@ class Location:
     def save(self, kind="perso"):
         """Save location data into JSON database.
 
-        Parameter
+        Parameters
         ---------
-        kind (str): 'perso' (default: non-shared locations), or 'global' (shared)
+        kind : str
+            'perso' (default: non-shared locations), or 'global' (shared)
 
-        Example
-        -------
-        location.save('global')
+        Examples
+        --------
+        >>> location.save('global')
         """
         filename = kind + ".json"
         file = LOCATIONS_FOLDER / filename

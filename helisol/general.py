@@ -90,7 +90,18 @@ class Angle:
         """Input angle in degrees (+ minutes/seconds), or in radians, or
         in time-like format (h, m, s).
 
-        Notes:
+        Parameters
+        ----------
+        degrees : float
+        minutes : float
+        seconds : float
+        [or]
+        hms : tuple
+        [or]
+        radians : float
+
+        Notes
+        -----
         - By default, value is considered to be decimal degrees, e.g. Angle(10.7)
         - degrees, minutes, seconds can be floats and are added
           (but it's preferrable to use ints when using  deg, min, sec instead
@@ -379,6 +390,14 @@ class Distance:
     def __init__(self, m=0, km=None, au=None):
         """Init distance with meters, kilometers or astronomical units.
 
+        Parameters
+        ----------
+        m : float
+        [or]
+        km : float
+        [or]
+        au : float
+
         Data can be single values or arrays.
         """
         try:
@@ -466,10 +485,12 @@ class Time:
 
         Parameters
         ----------
-        - utc_time: datetime or str (default None, i.e. current time)
+        utc_time : str or datetime.Datetime
+            UTC time, default None, i.e. current time
 
-        - fraction_of_day: if specified, overrides time from the given fraction
-                           of day (0.5 for Noon) [keeps input date]
+        fraction_of_day : float
+            if specified, overrides time from the given fraction of day
+            (e.g., 0.5 for Noon) [keeps input date]
         """
         self.utc = self._parse_time(utc_time)
         self._update()
@@ -520,7 +541,8 @@ class Time:
 
         Parameters
         ----------
-        - unit (str): 'second' or 'minute'
+        unit : str
+            'second' or 'minute'
         """
         if unit == "second":
             old_time = self.utc
@@ -547,11 +569,13 @@ def refraction_saemundsson_math(true_height):
 
     Parameters
     ----------
-    true_height: angle in degrees
+    true_height : float
+        angle in degrees
 
-    Output
-    ------
-    Refraction angle in arc-minutes
+    Returns
+    -------
+    float
+        Refraction angle in arc-minutes
     """
     y = true_height + (10.3 / (true_height + 5.11))
     return 1.02 / math.tan(y * np.pi / 180)
@@ -564,11 +588,13 @@ def refraction_saemundsson_np(true_height):
 
     Parameters
     ----------
-    true_height: angle in degrees
+    true_height : float
+        angle in degrees
 
-    Output
-    ------
-    Refraction angle in arc-minutes
+    Returns
+    -------
+    float
+        Refraction angle in arc-minutes
     """
     y = true_height + (10.3 / (true_height + 5.11))  # in degrees
     return 1.02 / np.tan(y * np.pi / 180)
@@ -579,11 +605,13 @@ def refraction_bennett_np(apparent_height=None):
 
     Parameters
     ----------
-    apparent_height: angle in degrees
+    apparent_height : float
+        angle in degrees
 
-    Output
-    ------
-    Refraction angle in arc-minutes
+    Returns
+    -------
+    float
+        Refraction angle in arc-minutes
     """
     y0 = apparent_height + 7.31 / (apparent_height + 4.4)  # in degrees
     return 1 / np.tan(y0 * np.pi / 180)
@@ -594,9 +622,15 @@ def refraction(true_height=None, apparent_height=None):
 
     Parameters
     ----------
-    - true_height: helisol.Angle
-    - apparent_height: helisol.Angle
+    true_height : helisol.Angle
+    apparent_height : helisol.Angle
 
+    Returns
+    -------
+    helisol.Angle
+
+    Notes
+    -----
     If both true_height and apparent_height are provided, apparent_height
     is ignored.
 
@@ -607,11 +641,11 @@ def refraction(true_height=None, apparent_height=None):
 
     Examples
     --------
-    refraction(true_height=Angle(0))
-    refraction(apparent_height=Angle(0))
-    refraction(Angle(23))                          # true height by default
-    refraction(true_height=Angle(degrees=23))
-    refraction(apparent_height=Angle(minutes=66))
+    >>> refraction(true_height=Angle(0))
+    >>> refraction(apparent_height=Angle(0))
+    >>> refraction(Angle(23))                        # true height by default
+    >>> refraction(true_height=Angle(degrees=23))
+    >>> refraction(apparent_height=Angle(minutes=66))
     """
     if true_height is not None:
         return AngleFromMinutes(refraction_saemundsson_np(true_height.degrees))

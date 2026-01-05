@@ -37,12 +37,13 @@ class Sun:
 
         Parameters
         ----------
-        - utc_time: datetime or str (default None, i.e. current time)
+        utc_time : datetime or str
+            UTC time, default None, i.e. current time
 
         Examples
         --------
-        Sun('9am')
-        Sun(utc_time='June 10 10:08:44')
+        >>> Sun('9am')
+        >>> Sun(utc_time='June 10 10:08:44')
         """
         self.update(utc_time=utc_time)
 
@@ -104,18 +105,19 @@ class SunObservation:
 
         Parameters
         ----------
-        - location: Location name from JSON database,
-                    [or] custom Location object
-                    [or] iterable (latitude, longitude) in degrees
-                    if None (default), use default location
+        location : str or Location or tuple or None
+            Location name from JSON database [or] custom Location object
+            [or] iterable (latitude, longitude) in degrees
+            if None (default), use default location
 
-        - utc_time: datetime or str (default None, i.e. current time)
+        utc_time : datetime.Datetime or str
+            UTC time; default None, i.e. current time
 
         Examples
         --------
-        loc = (42.4, -76.5)
-        Sun(loc, '9am')
-        Sun(location=loc, utc_time='June 10 10:08:44')
+        >>> loc = (42.4, -76.5)
+        >>> SunObservation(loc, '9am')
+        >>> SunObservation(location=loc, utc_time='June 10 10:08:44')
         """
         self.location = Location.parse(location)
         self.latitude, self.longitude = [
@@ -237,19 +239,25 @@ class SunObservation:
 
         Parameters
         ----------
-        - event: 'sunrise' or 'sunset'
-        - refract: (default: True): take into account refraction or not
-        - point: consider 'center', 'top', or 'bottom' of the sun
-        - obstacle: angular height of obstacle masking the sun (Angle object)
-                    or function of the azimuth (°) returning an angle (°).
-                    By default, no obstacle (obstacle angle of 0°).
-        - precision: which (angular) tolerance to consider matching heights
-                     NOTE: cannot be lower than 0.0002° (or 0.7 arcseconds or
-                     0.05 time-seconds) and even sometimes 0.002° (for some
-                     reason I do not completely understand yet) because one
-                     runs into precision limitations for floats in Python.
-                     Default: 0.01°.
-        - print_details: print info on the iteration / convergence process
+        event : str
+            'sunrise' or 'sunset'
+        refract : bool
+            (default: True): take into account refraction or not
+        point : str
+            consider 'center', 'top', or 'bottom' of the sun
+        obstacle : float or callable
+            angular height of obstacle masking the sun (Angle object)
+            or function of the azimuth (°) returning an angle (°).
+            By default, no obstacle (obstacle angle of 0°).
+        precision : float
+            which (angular) tolerance to consider matching heights
+            NOTE: cannot be lower than 0.0002° (or 0.7 arcseconds or
+            0.05 time-seconds) and even sometimes 0.002° (for some
+            reason I do not completely understand yet) because one
+            runs into precision limitations for floats in Python.
+            Default: 0.01°.
+        print_details : bool
+            print info on the iteration / convergence process
         """
         consider_obstacle = bool(obstacle)
         if consider_obstacle:
@@ -359,18 +367,23 @@ class SunObservation:
 
         Parameters
         ----------
-        - refract: (default: True): take into account refraction or not
-        - point: consider 'center', 'top', or 'bottom' of the sun
-        - obstacle: angular height of obstacle masking the sun (Angle object)
-                    or function of the azimuth (°) returning an angle (°).
-                    By default, no obstacle (obstacle angle of 0°).
-        - precision: which (angular) tolerance to consider matching heights
-                     NOTE: cannot be lower than 0.0002° (or 0.7 arcseconds or
-                     0.05 time-seconds) and even sometimes 0.002° (for some
-                     reason I do not completely understand yet) because one
-                     runs into precision limitations for floats in Python.
-                     Default: 0.01°.
-        - print_details: print info on the iteration / convergence process
+        refract : bool
+            (default: True): take into account refraction or not
+        point : str
+            consider 'center', 'top', or 'bottom' of the sun
+        obstacle : float or callable
+            angular height of obstacle masking the sun (Angle object)
+            or function of the azimuth (°) returning an angle (°).
+            By default, no obstacle (obstacle angle of 0°).
+        precision : float
+            which (angular) tolerance to consider matching heights
+            NOTE: cannot be lower than 0.0002° (or 0.7 arcseconds or
+            0.05 time-seconds) and even sometimes 0.002° (for some
+            reason I do not completely understand yet) because one
+            runs into precision limitations for floats in Python.
+            Default: 0.01°.
+        print_details : bool
+            print info on the iteration / convergence process
         """
         return self._actual_event(event="sunrise", *args, point=point, **kwargs)
 
@@ -379,17 +392,22 @@ class SunObservation:
 
         Parameters
         ----------
-        - refract: (default: True): take into account refraction or not
-        - point: consider 'center', 'top', or 'bottom' of the sun
-        - obstacle: angular height of obstacle masking the sun (Angle object)
-                    or function of the azimuth (°) returning an angle (°).
-                    By default, no obstacle (obstacle angle of 0°).
-        - precision: which (angular) tolerance to consider matching heights
-                     NOTE: cannot be lower than 0.0002° (or 0.7 arcseconds or
-                     0.05 time-seconds) and even sometimes 0.002° (for some
-                     reason I do not completely understand yet) because one
-                     runs into precision limitations for floats in Python.
-                     Default: 0.01°.
-        - print_details: print info on the iteration / convergence process
+        refract : bool
+            (default: True): take into account refraction or not
+        point : str
+            consider 'center', 'top', or 'bottom' of the sun
+        obstacle : float or callable
+            angular height of obstacle masking the sun (Angle object)
+            or function of the azimuth (°) returning an angle (°).
+            By default, no obstacle (obstacle angle of 0°).
+        precision : float
+            which (angular) tolerance to consider matching heights
+            NOTE: cannot be lower than 0.0002° (or 0.7 arcseconds or
+            0.05 time-seconds) and even sometimes 0.002° (for some
+            reason I do not completely understand yet) because one
+            runs into precision limitations for floats in Python.
+            Default: 0.01°.
+        print_details : bool
+            print info on the iteration / convergence process
         """
         return self._actual_event(event="sunset", *args, point=point, **kwargs)

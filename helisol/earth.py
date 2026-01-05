@@ -49,12 +49,13 @@ class EarthOrbit:
 
         Parameters
         ----------
-        utc_time: datetime or str (default None, i.e. current time)
+        utc_time : datetime or str
+            UTC time, default None, i.e. current time
 
         Examples
         --------
-        EarthOrbit('9am')
-        EarthOrbit(utc_time='June 10 10:08:44')
+        >>> EarthOrbit('9am')
+        >>> EarthOrbit(utc_time='June 10 10:08:44')
         """
         self.time = Time(utc_time=utc_time)
 
@@ -150,9 +151,12 @@ class EarthOrbit:
 
         Parameters
         ----------
-        year is e.g. 2023
-        kind is 'min' or 'max'
-        resolution in ('day', 'hour', 'minute', 'second')
+        year : int
+            e.g. 2023
+        kind : str
+            'min' or 'max'
+        resolution : str
+            'day', 'hour', 'minute', 'second'
         """
         start_date = "Jan 01"
         date_min = f"{start_date}, {year}"
@@ -173,9 +177,10 @@ class EarthOrbit:
     def perihelion(self, resolution="minute"):
         """Minimum sun-earth distance.
 
-        Parameter
-        ---------
-        - resolution (str): 'day', 'hour', 'minute' (default) or 'second'
+        Parameters
+        ----------
+        resolution : str
+            'day', 'hour', 'minute' (default) or 'second'
         """
         year = self.time.utc.year
         return self._find_extremum(year, kind="min", resolution=resolution)
@@ -183,9 +188,10 @@ class EarthOrbit:
     def aphelion(self, resolution="minute"):
         """Maximum sun-earth distance.
 
-        Parameter
-        ---------
-        - resolution (str): 'day', 'hour', 'minute' (default) or 'second'
+        Parameters
+        ----------
+        resolution : str
+            'day', 'hour', 'minute' (default) or 'second'
         """
         year = self.time.utc.year
         return self._find_extremum(year, kind="max", resolution=resolution)
@@ -197,12 +203,13 @@ class Earth:
 
         Parameters
         ----------
-        utc_time: datetime or str (default None, i.e. current time)
+        utc_time : datetime or str
+            UTC time, default None, i.e. current time
 
         Examples
         --------
-        Earth('9am')
-        Earth(utc_time='June 10 10:08:44')
+        >>> Earth('9am')
+        >>> Earth(utc_time='June 10 10:08:44')
         """
         self.update(utc_time=utc_time)
 
