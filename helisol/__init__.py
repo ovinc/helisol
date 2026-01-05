@@ -19,9 +19,13 @@
 # along with the helisol python package.
 # If not, see <https://www.gnu.org/licenses/>
 
-
 from .general import Time, Distance, Angle, AngleArray
-from .general import AngleFromRadians, AngleFromDegrees, AngleFromMinutes, AngleFromSeconds
+from .general import (
+    AngleFromRadians,
+    AngleFromDegrees,
+    AngleFromMinutes,
+    AngleFromSeconds,
+)
 from .general import sin, cos, tan, cotan, refraction
 from .general import astronomical_unit
 from .earth import Earth
@@ -33,6 +37,6 @@ from .locations import Location
 from importlib_metadata import version
 
 
-__version__ = version('helisol')
-__author__ = 'Olivier Vincent'
-__license__ = 'GNU GPLv3'
+__version__ = version("helisol")
+__author__ = "Olivier Vincent"
+__license__ = "GNU GPLv3"

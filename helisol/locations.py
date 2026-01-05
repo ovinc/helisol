@@ -29,8 +29,9 @@ from typing import Tuple
 
 from .config import CONFIG
 
-LOCATIONS_FOLDER = Path(helisol.__file__).parent.parent / 'locations'
-LOCATIONS_FILES = 'perso.json', 'global.json'
+LOCATIONS_FOLDER = Path(helisol.__file__).parent.parent / "locations"
+LOCATIONS_FILES = "perso.json", "global.json"
+
 
 @dataclass
 class Location:
@@ -49,7 +50,7 @@ class Location:
             return user_input
 
         if user_input is None:
-            return Location.load(CONFIG['default location'])
+            return Location.load(CONFIG["default location"])
 
         elif type(user_input) is str:
             return Location.load(user_input)
@@ -57,9 +58,9 @@ class Location:
         try:
             lat, long = [float(x) for x in user_input]
         except (TypeError, ValueError):
-            raise ValueError(f'Unknown location: {user_input}')
+            raise ValueError(f"Unknown location: {user_input}")
         else:
-            return Location(name='[Unspecified]', coords=(lat, long))
+            return Location(name="[Unspecified]", coords=(lat, long))
 
     @classmethod
     def load(cls, name):
@@ -84,7 +85,7 @@ class Location:
         else:
             raise ValueError(f'Location name "{name}" not found in JSON database')
 
-    def save(self, kind='perso'):
+    def save(self, kind="perso"):
         """Save location data into JSON database.
 
         Parameter
@@ -95,26 +96,26 @@ class Location:
         -------
         location.save('global')
         """
-        filename = kind + '.json'
+        filename = kind + ".json"
         file = LOCATIONS_FOLDER / filename
 
         data = self._from_json(file)  # load existing data to add to it
 
         props = copy(vars(self))
-        name = props.pop('name')
+        name = props.pop("name")
         data[name] = props
 
         self._to_json(file, data)
 
-    def remove(cls, name, kind='perso'):
+    def remove(cls, name, kind="perso"):
         """Remove location entry from JSON database"""
-        filename = kind + '.json'
+        filename = kind + ".json"
         file = LOCATIONS_FOLDER / filename
         data = cls._from_json(file)
         try:
             data.pop(name)
         except KeyError:
-            raise ValueError(f'No entry named {name} in {filename} database')
+            raise ValueError(f"No entry named {name} in {filename} database")
         else:
             cls._to_json(file, data)
 
@@ -122,7 +123,7 @@ class Location:
     def _from_json(file):
         """Load python data (dict or list) from json file"""
         try:
-            with open(file, 'r', encoding='utf8') as f:
+            with open(file, "r", encoding="utf8") as f:
                 data = json.load(f)
         except (FileNotFoundError, JSONDecodeError):  # no existing file or data
             data = {}
@@ -131,5 +132,5 @@ class Location:
     @staticmethod
     def _to_json(file, data):
         """Load python data (dict or list) from json file"""
-        with open(file, 'w', encoding='utf8') as f:
+        with open(file, "w", encoding="utf8") as f:
             json.dump(data, f, indent=4, ensure_ascii=False)

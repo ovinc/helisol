@@ -22,7 +22,6 @@
 
 # ================================= Imports ==================================
 
-
 import datetime
 import math
 from dateutil.parser import parse
@@ -35,41 +34,47 @@ import numpy as np
 
 CONSTANTS = {}
 
-CONSTANTS['reference time'] = datetime.datetime(2000, 1, 1, 12, 0)
+CONSTANTS["reference time"] = datetime.datetime(2000, 1, 1, 12, 0)
 
 a = {}  # Coefficients for average motion
-a['L'] = 280.46646, 36000.76983, 0.0003032   # J. MEEUS SAF
-a['M'] = 357.52911, 35999.05029, -0.0001537  # (degrees)
+a["L"] = 280.46646, 36000.76983, 0.0003032  # J. MEEUS SAF
+a["M"] = 357.52911, 35999.05029, -0.0001537  # (degrees)
 
-CONSTANTS['average motion coefficients'] = a
-CONSTANTS['nutation coefficients'] = (125.04, -1934.136)
+CONSTANTS["average motion coefficients"] = a
+CONSTANTS["nutation coefficients"] = (125.04, -1934.136)
 
-CONSTANTS['anomaly iterations'] = 3
-CONSTANTS['sunset iterations'] = 2
+CONSTANTS["anomaly iterations"] = 3
+CONSTANTS["sunset iterations"] = 2
 
 
-perturb_planet_coeffs = {'A': (351.52, 22518.4428),         # Venus 1
-                         'B': (253.14, 45036.8857),         # Venus 2
-                         'C': (157.23, 32964.4673),         # Jupiter
-                         'D': (297.85, 445267.1117),        # Moon
-                         'E': (252.08, 20.190),             # Long period
-                         'H': (42.43, 65928.9358)}          # H
+perturb_planet_coeffs = {
+    "A": (351.52, 22518.4428),  # Venus 1
+    "B": (253.14, 45036.8857),  # Venus 2
+    "C": (157.23, 32964.4673),  # Jupiter
+    "D": (297.85, 445267.1117),  # Moon
+    "E": (252.08, 20.190),  # Long period
+    "H": (42.43, 65928.9358),
+}  # H
 
-perturb_planet_longitude = {'A': (134e-5, 'cos'),
-                            'B': (153e-5, 'cos'),
-                            'C': (200e-5, 'cos'),
-                            'D': (180e-5, 'sin'),
-                            'E': (196e-5, 'sin')}
+perturb_planet_longitude = {
+    "A": (134e-5, "cos"),
+    "B": (153e-5, "cos"),
+    "C": (200e-5, "cos"),
+    "D": (180e-5, "sin"),
+    "E": (196e-5, "sin"),
+}
 
-perturb_planet_radius = {'A': (5.42e-6, 'sin'),
-                         'B': (15.76e-6, 'sin'),
-                         'C': (16.28e-6, 'sin'),
-                         'D': (30.84e-6, 'cos'),
-                         'H': (9.25e-6, 'sin')}
+perturb_planet_radius = {
+    "A": (5.42e-6, "sin"),
+    "B": (15.76e-6, "sin"),
+    "C": (16.28e-6, "sin"),
+    "D": (30.84e-6, "cos"),
+    "H": (9.25e-6, "sin"),
+}
 
-CONSTANTS['planet perturbation coefficients'] = perturb_planet_coeffs
-CONSTANTS['planet perturbation longitude'] = perturb_planet_longitude
-CONSTANTS['planet perturbation radius'] = perturb_planet_radius
+CONSTANTS["planet perturbation coefficients"] = perturb_planet_coeffs
+CONSTANTS["planet perturbation longitude"] = perturb_planet_longitude
+CONSTANTS["planet perturbation radius"] = perturb_planet_radius
 
 astronomical_unit = 149_597_870_700  # in meters
 
@@ -80,10 +85,8 @@ astronomical_unit = 149_597_870_700  # in meters
 @total_ordering
 class Angle:
     """Store angles and retrieve them in degrees, radians or hours"""
-    def __init__(self,
-                 degrees=0, minutes=0, seconds=0,
-                 hms=None,
-                 radians=None):
+
+    def __init__(self, degrees=0, minutes=0, seconds=0, hms=None, radians=None):
         """Input angle in degrees (+ minutes/seconds), or in radians, or
         in time-like format (h, m, s).
 
@@ -98,10 +101,10 @@ class Angle:
         # ATTENTION the nature of the tests below can significantly reduce
         # speed of some operations, e.g. calculating sunsets, sunrises etc.
         test_input_deg = any([bool(x) for x in (degrees, minutes, seconds)])
-        test_input_hms = (hms is not None)
-        test_input_rad = (radians is not None)
+        test_input_hms = hms is not None
+        test_input_rad = radians is not None
         if sum([test_input_deg, test_input_hms, test_input_rad]) > 1:
-            raise ValueError('Cannot specify angle in more than one set of units')
+            raise ValueError("Cannot specify angle in more than one set of units")
 
         if test_input_rad:
             self._degrees = radians * 180 / np.pi
@@ -112,7 +115,7 @@ class Angle:
             self._degrees = degrees + minutes / 60 + seconds / 3600
 
     def __repr__(self):
-        sign = '-' if self.sign < 0 else ''
+        sign = "-" if self.sign < 0 else ""
         degrees = abs(int(self.degrees))
         minutes = abs(self.minutes)
         seconds = abs(self.seconds)
@@ -120,8 +123,8 @@ class Angle:
         a = "helisol.Angle"
         b = f"""\n{sign}{degrees}°{minutes}'{seconds:.2f}" """
         c = f"[{sign}{h}h{m}m{s:.2f}s]\n"
-        d = f'{self.degrees} [°]\n'
-        e = f'{self.radians} [rad]'
+        d = f"{self.degrees} [°]\n"
+        e = f"{self.radians} [rad]"
         return a + b + c + d + e
 
     @property
@@ -133,10 +136,10 @@ class Angle:
             return (int(self.degrees > 0)) - (int(self.degrees < 0))
 
     def __eq__(self, other):
-        return (self.degrees == other.degrees)
+        return self.degrees == other.degrees
 
     def __lt__(self, other):
-        return (self.degrees < other.degrees)
+        return self.degrees < other.degrees
 
     def __add__(self, other):
         return Angle(degrees=self.degrees + other.degrees)
@@ -158,7 +161,9 @@ class Angle:
 
     @property
     def radians(self):
-        return self._degrees * np.pi / 180  # much faster than np.radians() for single values
+        return (
+            self._degrees * np.pi / 180
+        )  # much faster than np.radians() for single values
 
     @property
     def degrees(self):
@@ -223,6 +228,7 @@ class Angle:
 @total_ordering
 class AngleArray:
     """Store arrays of angles and retrieve them in degrees or radians."""
+
     def __init__(self, degrees=None, minutes=None, seconds=None, radians=None):
         """Input angle in degrees (+ minutes/seconds), or in radians.
 
@@ -234,9 +240,9 @@ class AngleArray:
         - ValueError raised if input has mixed units between ° and rad
         """
         test_input_deg = any([x is not None for x in (degrees, minutes, seconds)])
-        test_input_rad = (radians is not None)
+        test_input_rad = radians is not None
         if sum([test_input_deg, test_input_rad]) > 1:
-            raise ValueError('Cannot specify angle in more than one set of units')
+            raise ValueError("Cannot specify angle in more than one set of units")
 
         if radians is not None:
             self._degrees = np.degrees(radians)
@@ -249,15 +255,15 @@ class AngleArray:
 
     def __repr__(self):
         a = "helisol.AngleArray"
-        b = f'{self.degrees} [°]\n'
-        c = f'{self.radians} [rad]'
+        b = f"{self.degrees} [°]\n"
+        c = f"{self.radians} [rad]"
         return a + b + c
 
     def __eq__(self, other):
-        return (self.degrees == other.degrees)
+        return self.degrees == other.degrees
 
     def __lt__(self, other):
-        return (self.degrees < other.degrees)
+        return self.degrees < other.degrees
 
     def __add__(self, other):
         return AngleArray(degrees=self.degrees + other.degrees)
@@ -370,7 +376,6 @@ def cotan(angle):
 
 @total_ordering
 class Distance:
-
     def __init__(self, m=0, km=None, au=None):
         """Init distance with meters, kilometers or astronomical units.
 
@@ -380,10 +385,10 @@ class Distance:
             test_input_m = bool(abs(m) > 0)
         except ValueError:  # if array is passed, consider it as an input
             test_input_m = True
-        test_input_km = (km is not None)
-        test_input_au = (au is not None)
+        test_input_km = km is not None
+        test_input_au = au is not None
         if sum([test_input_m, test_input_km, test_input_au]) > 1:
-            raise ValueError('Cannot specify angle in more than one set of units')
+            raise ValueError("Cannot specify angle in more than one set of units")
 
         if test_input_km:
             self.km = km
@@ -393,13 +398,13 @@ class Distance:
             self.m = m
 
     def __repr__(self):
-        return f'helisol.Distance\n{self.m}[m]\n{self.km}[km]\n{self.au}[A.U.]'
+        return f"helisol.Distance\n{self.m}[m]\n{self.km}[km]\n{self.au}[A.U.]"
 
     def __eq__(self, other):
-        return (self.m == other.m)
+        return self.m == other.m
 
     def __lt__(self, other):
-        return (self.m < other.m)
+        return self.m < other.m
 
     def __add__(self, other):
         return Distance(m=self.m + other.m)
@@ -477,7 +482,7 @@ class Time:
 
     def _update(self):
         """Recalculate quantities if UTC time has changed."""
-        self.elapsed = self.utc - CONSTANTS['reference time']
+        self.elapsed = self.utc - CONSTANTS["reference time"]
         self.days = self.elapsed.total_seconds() / (24 * 3600)
         self.julian_years = self.days / 365.25
         self.julian_centuries = self.julian_years / 100
@@ -487,7 +492,9 @@ class Time:
         if utc_time is None:
             return datetime.datetime.utcnow()
         else:
-            return parse(str(utc_time), yearfirst=True)  # str is in case a datetime object is passed
+            return parse(
+                str(utc_time), yearfirst=True
+            )  # str is in case a datetime object is passed
 
     @property
     def fraction_of_day(self):
@@ -508,21 +515,21 @@ class Time:
         self.utc = datetime.datetime.combine(date, midnight) + Δt
         self._update()
 
-    def rounded_to(self, unit='second'):
+    def rounded_to(self, unit="second"):
         """Return rounded version of self.
 
         Parameters
         ----------
         - unit (str): 'second' or 'minute'
         """
-        if unit == 'second':
+        if unit == "second":
             old_time = self.utc
             new_time = old_time.replace(microsecond=0)
             if old_time.microsecond >= 5e5:
                 new_time += datetime.timedelta(seconds=1)
 
-        elif unit == 'minute':
-            old_time = self.rounded_to('second').utc
+        elif unit == "minute":
+            old_time = self.rounded_to("second").utc
             new_time = old_time.replace(second=0)
             if old_time.second >= 30:
                 new_time += datetime.timedelta(minutes=1)

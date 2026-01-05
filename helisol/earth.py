@@ -19,7 +19,6 @@
 # along with the helisol python package.
 # If not, see <https://www.gnu.org/licenses/>
 
-
 import numpy as np
 
 from .general import CONSTANTS
@@ -28,16 +27,18 @@ from .general import AngleFromDegrees, AngleFromSeconds, AngleFromRadians
 from .general import sin, cos, tan
 
 
-perturb_planet_coeffs = CONSTANTS['planet perturbation coefficients']
-perturb_planet_longitude = CONSTANTS['planet perturbation longitude']
-perturb_planet_radius = CONSTANTS['planet perturbation radius']
+perturb_planet_coeffs = CONSTANTS["planet perturbation coefficients"]
+perturb_planet_longitude = CONSTANTS["planet perturbation longitude"]
+perturb_planet_radius = CONSTANTS["planet perturbation radius"]
 
-durations_fdays = {'day': 1,         # durations in fractions of days
-                   'hour': 1 / 24,
-                   'minute': 1 / (24 * 60),
-                   'second': 1 / (24 * 3600)}
+durations_fdays = {
+    "day": 1,  # durations in fractions of days
+    "hour": 1 / 24,
+    "minute": 1 / (24 * 60),
+    "second": 1 / (24 * 3600),
+}
 
-extrem_funcs = {'min': np.argmin, 'max': np.argmax}
+extrem_funcs = {"min": np.argmin, "max": np.argmax}
 
 
 class EarthOrbit:
@@ -59,7 +60,7 @@ class EarthOrbit:
 
     def __repr__(self):
         year = self.time.utc.date().year
-        return f'Earth Orbit in {year}'
+        return f"Earth Orbit in {year}"
 
     @property
     def excentricity(self):
@@ -78,16 +79,16 @@ class EarthOrbit:
     @property
     def spring_longitude(self):
         """Longitude between perigee and spring"""
-        a = CONSTANTS['average motion coefficients']
+        a = CONSTANTS["average motion coefficients"]
         t = self.time.julian_centuries
-        gamma0 = sum([(a['L'][i] - a['M'][i]) * t**i for i in range(3)])
+        gamma0 = sum([(a["L"][i] - a["M"][i]) * t**i for i in range(3)])
         return AngleFromDegrees(gamma0)
 
     @property
     def nutation(self):
         """Ω"""
         t = self.time.julian_centuries
-        nut0, nut1 = CONSTANTS['nutation coefficients']
+        nut0, nut1 = CONSTANTS["nutation coefficients"]
         return AngleFromDegrees(nut0 + nut1 * t)
 
     @property
@@ -129,7 +130,7 @@ class EarthOrbit:
         return Distance(au=perturb)
 
     @staticmethod
-    def _find_local_extremum(date_min, date_max, kind='min', resolution='hour'):
+    def _find_local_extremum(date_min, date_max, kind="min", resolution="hour"):
         """Resolution can be day, hour, minute, second"""
         t1 = Time(date_min)
         t2 = Time(date_max)
@@ -144,7 +145,7 @@ class EarthOrbit:
         return Time(date_min, fraction_of_day=ff[i0])
 
     @classmethod
-    def _find_extremum(cls, year, kind='min', resolution='minute'):
+    def _find_extremum(cls, year, kind="min", resolution="minute"):
         """Find perigee or apogee.
 
         Parameters
@@ -153,15 +154,14 @@ class EarthOrbit:
         kind is 'min' or 'max'
         resolution in ('day', 'hour', 'minute', 'second')
         """
-        start_date = 'Jan 01'
-        date_min = f'{start_date}, {year}'
-        date_max = f'{start_date}, {year + 1}'
+        start_date = "Jan 01"
+        date_min = f"{start_date}, {year}"
+        date_max = f"{start_date}, {year + 1}"
 
-        for res in 'day', 'hour', 'minute', 'second':
-            date = cls._find_local_extremum(date_min=date_min,
-                                            date_max=date_max,
-                                            kind=kind,
-                                            resolution=res)
+        for res in "day", "hour", "minute", "second":
+            date = cls._find_local_extremum(
+                date_min=date_min, date_max=date_max, kind=kind, resolution=res
+            )
             if res == resolution:
                 return date
             f = date.fraction_of_day
@@ -170,7 +170,7 @@ class EarthOrbit:
             date_min = Time(date, fraction_of_day=fmin)
             date_max = Time(date, fraction_of_day=fmax)
 
-    def perihelion(self, resolution='minute'):
+    def perihelion(self, resolution="minute"):
         """Minimum sun-earth distance.
 
         Parameter
@@ -178,9 +178,9 @@ class EarthOrbit:
         - resolution (str): 'day', 'hour', 'minute' (default) or 'second'
         """
         year = self.time.utc.year
-        return self._find_extremum(year, kind='min', resolution=resolution)
+        return self._find_extremum(year, kind="min", resolution=resolution)
 
-    def aphelion(self, resolution='minute'):
+    def aphelion(self, resolution="minute"):
         """Maximum sun-earth distance.
 
         Parameter
@@ -188,11 +188,10 @@ class EarthOrbit:
         - resolution (str): 'day', 'hour', 'minute' (default) or 'second'
         """
         year = self.time.utc.year
-        return self._find_extremum(year, kind='max', resolution=resolution)
+        return self._find_extremum(year, kind="max", resolution=resolution)
 
 
 class Earth:
-
     def __init__(self, utc_time=None):
         """Init earth object from specific date/time.
 
@@ -214,14 +213,14 @@ class Earth:
     def __repr__(self):
         date = self.time.utc.date()
         time = self.time.utc.time().strftime("%H:%M:%S")
-        return f'Earth on {date} at {time} (UTC)'
+        return f"Earth on {date} at {time} (UTC)"
 
     @property
     def average_motion(self):
         """Average motion with respect to perigee"""
-        a = CONSTANTS['average motion coefficients']
+        a = CONSTANTS["average motion coefficients"]
         t = self.time.julian_centuries
-        m_deg = sum([a['M'][i] * t**i for i in range(3)])
+        m_deg = sum([a["M"][i] * t**i for i in range(3)])
         m = AngleFromDegrees(m_deg)
         m.minus_pi_to_pi()
         return m
@@ -240,7 +239,7 @@ class Earth:
     @property
     def true_anomaly(self):
         """True anomaly (nu)"""
-        u = self.anomaly(iteration=CONSTANTS['anomaly iterations'])
+        u = self.anomaly(iteration=CONSTANTS["anomaly iterations"])
         e = self.orbit.excentricity
         return 2 * Angle.arctan(np.sqrt((1 + e) / (1 - e)) * tan(u / 2))
 

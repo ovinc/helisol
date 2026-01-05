@@ -19,17 +19,17 @@
 # along with the helisol python package.
 # If not, see <https://www.gnu.org/licenses/>
 
-
 import argparse
 
 
 descr = "Calculate sun position, sunset, sunrise, and solar noon."
 
-parser = argparse.ArgumentParser(description=descr,
-                                 formatter_class=argparse.RawTextHelpFormatter)
+parser = argparse.ArgumentParser(
+    description=descr, formatter_class=argparse.RawTextHelpFormatter
+)
 
 msg = "Input location"
 
 # The nargs='?' is to have a positional argument with a default value
-parser.add_argument('location', type=str, nargs='?', help=msg)
+parser.add_argument("location", type=str, nargs="?", help=msg)
 args = parser.parse_args()

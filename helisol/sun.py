@@ -19,7 +19,6 @@
 # along with the helisol python package.
 # If not, see <https://www.gnu.org/licenses/>
 
-
 from copy import copy
 import numpy as np
 
@@ -50,12 +49,12 @@ class Sun:
     def __repr__(self):
         date = self.time.utc.date()
         time = self.time.utc.time().strftime("%H:%M:%S")
-        a = f'Sun on {date} at {time} (UTC)\n'
+        a = f"Sun on {date} at {time} (UTC)\n"
 
         ẟ = self.declination.degrees
         alpha = self.right_ascension.degrees
         eqt = self.equation_of_time.degrees
-        b = f'Declination [{ẟ:.1f}°], Right Asc. [{alpha:.1f}°], EQT [{eqt:.1f}°]'
+        b = f"Declination [{ẟ:.1f}°], Right Asc. [{alpha:.1f}°], EQT [{eqt:.1f}°]"
 
         return a + b
 
@@ -91,7 +90,7 @@ class Sun:
         Δψ = self.earth.orbit.correc_nutation
         ε = self.earth.orbit.axial_tilt
 
-        eqt = (alpha - gamma0 - m - Δaberr - Δψ * cos(ε))
+        eqt = alpha - gamma0 - m - Δaberr - Δψ * cos(ε)
         eqt.minus_pi_to_pi()
 
         return eqt
@@ -119,7 +118,9 @@ class SunObservation:
         Sun(location=loc, utc_time='June 10 10:08:44')
         """
         self.location = Location.parse(location)
-        self.latitude, self.longitude = [AngleFromDegrees(x) for x in self.location.coords]
+        self.latitude, self.longitude = [
+            AngleFromDegrees(x) for x in self.location.coords
+        ]
         self.update(utc_time=utc_time)
 
     def update(self, utc_time=None):
@@ -129,21 +130,20 @@ class SunObservation:
         self.sun = Sun(utc_time=utc_time)
 
     def __repr__(self):
-
         lat = self.latitude.degrees
         long = self.longitude.degrees
         date = self.time.utc.date()
         time = self.time.utc.time().strftime("%H:%M:%S")
-        a = f'Sun observation from ({lat}°, {long}°) on {date} at {time} (UTC)'
+        a = f"Sun observation from ({lat}°, {long}°) on {date} at {time} (UTC)"
 
         height = self.height.degrees
         app_h = self.apparent_height.degrees
         azimuth = self.azimuth.degrees
-        b = f'\nAzimuth [{azimuth:.1f}°], Height [{height:.1f}°], App. Height [{app_h:.1f}°]'
+        b = f"\nAzimuth [{azimuth:.1f}°], Height [{height:.1f}°], App. Height [{app_h:.1f}°]"
 
         moments = self.sunrise.utc, self.noon.utc, self.sunset.utc
         sunrise, noon, sunset = [m.strftime("%H:%M:%S") for m in moments]
-        c = f'\nSunrise {sunrise} Noon {noon} Sunset {sunset}'
+        c = f"\nSunrise {sunrise} Noon {noon} Sunset {sunset}"
 
         return a + b + c
 
@@ -199,9 +199,11 @@ class SunObservation:
         set_frac = 2 * self._noon().fraction_of_day - self._sunrise().fraction_of_day
         return Time(utc_time=self.time.utc.date(), fraction_of_day=set_frac)
 
-    def _converge_to_event(self, event='noon', iteration=CONSTANTS['sunset iterations']):
+    def _converge_to_event(
+        self, event="noon", iteration=CONSTANTS["sunset iterations"]
+    ):
         """Iterative way of conver ging sun towards sunrise, noon, or sunset"""
-        raw_event_name = '_' + event
+        raw_event_name = "_" + event
         if iteration == 0:
             return self
         else:
@@ -211,23 +213,25 @@ class SunObservation:
 
     @property
     def noon(self):
-        return self._converge_to_event(event='noon')._noon()
+        return self._converge_to_event(event="noon")._noon()
 
     @property
     def sunrise(self):
-        return self._converge_to_event(event='sunrise')._sunrise()
+        return self._converge_to_event(event="sunrise")._sunrise()
 
     @property
     def sunset(self):
-        return self._converge_to_event(event='sunset')._sunset()
+        return self._converge_to_event(event="sunset")._sunset()
 
-    def _actual_event(self,
-                      event='sunrise',
-                      refract=True,
-                      point='center',
-                      obstacle=None,
-                      precision=0.01,
-                      print_details=False):
+    def _actual_event(
+        self,
+        event="sunrise",
+        refract=True,
+        point="center",
+        obstacle=None,
+        precision=0.01,
+        print_details=False,
+    ):
         """Find actual moment of sunset or sunrise (with refraction / obstacles).
         (iteratively)
 
@@ -252,14 +256,14 @@ class SunObservation:
             try:
                 obstacle(0)
             except TypeError:
-                obstacle_height = obstacle      # obstacle is an angle
+                obstacle_height = obstacle  # obstacle is an angle
                 obstacle_is_func = False
             else:
-                obstacle_height = obstacle      # obstacle is func(azimuth)
+                obstacle_height = obstacle  # obstacle is func(azimuth)
                 obstacle_is_func = True
 
-        coeffs = {'sunrise': -1, 'sunset': 1}
-        point_coeff = {'center': 0, 'bottom': -1, 'top': 1}
+        coeffs = {"sunrise": -1, "sunset": 1}
+        point_coeff = {"center": 0, "bottom": -1, "top": 1}
         c = coeffs[event]
         p = point_coeff[point]
 
@@ -275,7 +279,7 @@ class SunObservation:
             h = obs_search.height.degrees
             az = obs_search.azimuth.degrees
 
-            if point in ('top', 'bottom'):
+            if point in ("top", "bottom"):
                 diam = obs_search.sun.angular_diameter.degrees
                 h += p * diam / 2
 
@@ -305,7 +309,7 @@ class SunObservation:
                 m = match_heights(f)
                 if abs(m) < precision:
                     found = True
-                elif np.sign(m) == - np.sign(m0):
+                elif np.sign(m) == -np.sign(m0):
                     stop = True
                 elif i > max_it:
                     max_iterations = True
@@ -313,18 +317,20 @@ class SunObservation:
                     i += 1
                     f += direction * step
 
-            return {'value': f,
-                    'found': found,
-                    'stopped': stop,
-                    'iterations': i,
-                    'max iterations': max_iterations,
-                    'residual': m}
+            return {
+                "value": f,
+                "found": found,
+                "stopped": stop,
+                "iterations": i,
+                "max iterations": max_iterations,
+                "residual": m,
+            }
 
         def manage_result(results):
-            results['iterations'] = total_iterations
+            results["iterations"] = total_iterations
             if print_details:
                 print(results)
-            f = results['value']
+            f = results["value"]
             return Time(utc_time=self.time, fraction_of_day=f)
 
         f = f0
@@ -332,23 +338,23 @@ class SunObservation:
 
         for step in (1e-2, 1e-3, 1e-4, 1e-5, 1e-6):
             results = mvtime(f, step=step)
-            f = results['value']
-            total_iterations += results['iterations']
-            if results['found']:
+            f = results["value"]
+            total_iterations += results["iterations"]
+            if results["found"]:
                 return manage_result(results)
         else:
-            if results['found']:
+            if results["found"]:
                 return manage_result(results)
             else:
-                msg = f'Impossible to converge {event} search within tolerance. '
-                msg += f'This might be because required precision of {precision}° is too high '
-                msg += 'or because the input obstacle height is larger than the maximum height of the sun. '
-                msg += 'Please try first lower precision and/or lower obstacle height. '
-                results['iterations'] = total_iterations
+                msg = f"Impossible to converge {event} search within tolerance. "
+                msg += f"This might be because required precision of {precision}° is too high "
+                msg += "or because the input obstacle height is larger than the maximum height of the sun. "
+                msg += "Please try first lower precision and/or lower obstacle height. "
+                results["iterations"] = total_iterations
                 msg += str(results)
                 raise RuntimeError(msg)
 
-    def actual_sunrise(self, *args, point='top', **kwargs):
+    def actual_sunrise(self, *args, point="top", **kwargs):
         """Find actual moment of sunrise (with refraction / obstacles), iteratively.
 
         Parameters
@@ -366,9 +372,9 @@ class SunObservation:
                      Default: 0.01°.
         - print_details: print info on the iteration / convergence process
         """
-        return self._actual_event(event='sunrise', *args, point=point, **kwargs)
+        return self._actual_event(event="sunrise", *args, point=point, **kwargs)
 
-    def actual_sunset(self, *args, point='top', **kwargs):
+    def actual_sunset(self, *args, point="top", **kwargs):
         """Find actual moment of sunrise (with refraction / obstacles), iteratively.
 
         Parameters
@@ -386,4 +392,4 @@ class SunObservation:
                      Default: 0.01°.
         - print_details: print info on the iteration / convergence process
         """
-        return self._actual_event(event='sunset', *args, point=point, **kwargs)
+        return self._actual_event(event="sunset", *args, point=point, **kwargs)

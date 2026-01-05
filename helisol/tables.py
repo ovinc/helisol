@@ -19,7 +19,6 @@
 # along with the helisol python package.
 # If not, see <https://www.gnu.org/licenses/>
 
-
 import datetime
 import pandas as pd
 from oclock import parse_time
@@ -30,12 +29,12 @@ from .locations import Location
 
 
 column_names = {
-    'azimuth': 'Azimuth (°)',
-    'height': 'Height (°)',
-    'apparent_height': 'Apparent Height (°)',
-    'sun.declination': 'Declination (°)',
-    'sun.right_ascension': 'Right Ascension (°)',
-    'sun.equation_of_time': 'Equation of Time (°)',
+    "azimuth": "Azimuth (°)",
+    "height": "Height (°)",
+    "apparent_height": "Apparent Height (°)",
+    "sun.declination": "Declination (°)",
+    "sun.right_ascension": "Right Ascension (°)",
+    "sun.equation_of_time": "Equation of Time (°)",
 }
 
 
@@ -59,7 +58,7 @@ def _get_value(obj, name):
 
     (e.g. _get_value(observation, sun.declination))
     """
-    for attrib in name.split('.'):
+    for attrib in name.split("."):
         obj = getattr(obj, attrib)
     return obj
 
@@ -100,20 +99,18 @@ def generate_table(location, start, end, interval, columns=column_names):
     times = _generate_times(start=start, end=end, interval=interval)
 
     data = {}
-    data['Date'] = [time.utc.date() for time in times]
-    data['Time (UTC)'] = [time.utc.time() for time in times]
+    data["Date"] = [time.utc.date() for time in times]
+    data["Time (UTC)"] = [time.utc.time() for time in times]
 
-    observations = [SunObservation(location=location, utc_time=time)
-                    for time in times]
+    observations = [SunObservation(location=location, utc_time=time) for time in times]
 
     for ppty, name in columns.items():
-        data[name] = [_get_value(obs, ppty).degrees
-                      for obs in observations]
+        data[name] = [_get_value(obs, ppty).degrees for obs in observations]
 
     return pd.DataFrame(data)
 
 
-def sunset_table(location, start, end, refract=True, point='top', rounding='second'):
+def sunset_table(location, start, end, refract=True, point="top", rounding="second"):
     """Create able with sunrise, noon and sunsets between specified dates.
 
     NOTE: it can take a little while for large datasets
@@ -140,23 +137,22 @@ def sunset_table(location, start, end, refract=True, point='top', rounding='seco
     ------
     Pandas DataFrame
     """
-    times = _generate_times(start=start, end=end, interval='24::')
+    times = _generate_times(start=start, end=end, interval="24::")
 
     data = {}
-    data['Date'] = [time.utc.date() for time in times]
+    data["Date"] = [time.utc.date() for time in times]
 
-    observations = [SunObservation(location=location, utc_time=time)
-                    for time in times]
+    observations = [SunObservation(location=location, utc_time=time) for time in times]
 
-    for ppty in 'sunrise', 'noon', 'sunset':
+    for ppty in "sunrise", "noon", "sunset":
         name = ppty.capitalize()
         ll = []
         for obs in observations:
-            if ppty == 'noon' or (not refract and point == 'center'):
+            if ppty == "noon" or (not refract and point == "center"):
                 time = _get_value(obs, ppty)
                 ftime = time
             else:
-                ppty_func = 'actual_' + ppty
+                ppty_func = "actual_" + ppty
                 time_func = _get_value(obs, ppty_func)
                 ftime = time_func(refract=refract, point=point, precision=0.002)
             ll.append(ftime.rounded_to(rounding).utc.time())
@@ -165,11 +161,9 @@ def sunset_table(location, start, end, refract=True, point='top', rounding='seco
     return pd.DataFrame(data)
 
 
-def extend_table(data,
-                 location,
-                 date_column='Date',
-                 time_column='Time (UTC)',
-                 columns=column_names):
+def extend_table(
+    data, location, date_column="Date", time_column="Time (UTC)", columns=column_names
+):
     """Takes an existing table with date / time columns and adds columns with
     the corresponding solar data.
 
@@ -195,6 +189,7 @@ def extend_table(data,
     data = pd.read_excel('Data.xls')
     extend_table(data, location=(47, 2))
     """
+
     def _calculate_angle(ppty, row):
         utc_time = datetime.datetime.combine(row[date_column], row[time_column])
         obs = SunObservation(location=location, utc_time=utc_time)

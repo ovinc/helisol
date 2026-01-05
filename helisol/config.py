@@ -19,6 +19,5 @@
 # along with the helisol python package.
 # If not, see <https://www.gnu.org/licenses/>
 
-
 CONFIG = {}
-CONFIG['default location'] = 'Home'
+CONFIG["default location"] = "Home"
